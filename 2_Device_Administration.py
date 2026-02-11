@@ -6,16 +6,15 @@ import time
 
 class DeviceAdministration(CtsVerifier):
 
-    def failed_testcase(self):
-        # failed = []
-        pass
-
     def device_admin_tapjacking_test(self):
-        test_name = "Device Admin Tapjacking Test"
+        self.test_name = "Device Admin Tapjacking Test"
 
         try:
             # 1. 進入測試
-            if not self.scroll_and_click(test_name):return
+            if not self.scroll_and_click(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                return False
 
             # 2. 點擊按鈕 (觸發遮罩)
             self.d(resourceId="com.android.cts.verifier:id/enable_admin_overlay_button").click(timeout=5)
@@ -52,23 +51,22 @@ class DeviceAdministration(CtsVerifier):
                 self.click_fail()
 
         except Exception as e:
-            print(f"  [Crash] {test_name} 發生意外錯誤: {e}")
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-            self.d.screenshot(f"Crash_{test_name}.jpg")
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
             self.go_back_to_list()
 
-        while self.d(text=test_name).exists() and not self.d(description="More options").exists:
-            self.d.press("back")
-            self.d.sleep(0.5)
+        while self.d(text=self.test_name).exists() and not self.d(description="More options").exists:
+            self.open_ctsv_from_recents()
 
     def device_admin_uninstall_test(self):
-        test_name = "Device Admin Uninstall Test"
+        self.test_name = "Device Admin Uninstall Test"
 
         try:
-            if not self.scroll_and_click(test_name): return
+            if not self.scroll_and_click(self.test_name): return
 
-            base_dir = r"D:\Python\CSTV\Downloads\android-cts-verifier"
+            base_dir = r"D:\Python\CTSV\Downloads\android-cts-verifier"
             apk_name = "CtsEmptyDeviceAdmin.apk"
 
             apk_path = os.path.join(base_dir, apk_name)
@@ -83,8 +81,9 @@ class DeviceAdministration(CtsVerifier):
                 return
 
             self.d(resourceId="com.android.cts.verifier:id/enable_device_admin_button").click()
-
+            self.d.sleep(1)
             self.d.swipe(0.5, 0.5, 0.5, 1.0)
+            self.d.sleep(1)
             self.d(resourceId="com.android.settings:id/restricted_action").click()
             self.d.sleep(1)
 
@@ -92,38 +91,56 @@ class DeviceAdministration(CtsVerifier):
             self.d(resourceId="com.android.cts.verifier:id/open_app_details_button").click()
             self.d.sleep(1)
             self.d(textContains="Uninstall").click()
-            self.d.swipe(0.5, 0.5, 0.5, 0.2)
-            self.d.sleep(1)
+            self.d.swipe(0.5, 0.5, 0.5, 1.0)
+            self.d.sleep(3)
             self.d(resourceId="com.android.settings:id/restricted_action").click()
-            self.d.sleep(1)
+            self.d.sleep(2)
 
             if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=3):
                 self.click_pass()
             else:
-                print(f"{test_name} Failed")
+                print(f"  [{self.test_name}] Failed")
                 self.click_fail()
 
         except Exception as e:
-            print(f"  [Crash] {test_name} 發生意外錯誤: {e}")
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-            self.d.screenshot(f"Crash_{test_name}.jpg")
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
             self.go_back_to_list()
 
 
     def policy_serialization_test(self):
-        test_name = "Policy Serialization Test"
+        self.test_name = "Policy Serialization Test"
 
         try:
-            if not self.scroll_and_click(test_name): return
+            if not self.scroll_and_click(self.test_name): return
 
             self.d(resourceId="com.android.cts.verifier:id/generate_policy_button").click(timeout=2)
-            self.d(text="Maximum Failed Passwords for Wipe").click()
-            self.d(text="Maximum Time to Lock").click()
-            self.d.sleep(2)
+            if self.d(text="Maximum Failed Passwords for Wipe").exists():
+                self.d(text="Maximum Failed Passwords for Wipe").click()
+                print("  [Click] 點擊 Maximum Failed Passwords for Wipe")
+                self.d.sleep(3)
+
+            if self.d(text="Maximum Time to Lock").exists():
+                self.d(text="Maximum Time to Lock").click()
+                print("  [Click] 點擊 Maximum Time to Lock")
+                self.d.sleep(2)
+
+
             self.d(resourceId="com.android.cts.verifier:id/apply_policy_button").click()
             self.d.sleep(2)
+            if self.d(resourceId="com.android.settings:id/admin_icon").exists():
+                self.d.swipe(0.5, 0.5, 0.5, 1.0)
+                self.d.sleep(1)
+                if self.d(resourceId="com.android.settings:id/restricted_action").exists():
+                    self.d(resourceId="com.android.settings:id/restricted_action").click()
+                    self.d.sleep(1)
+                else:
+                    print("  [Fail] 找不到 Activate this device admin app 功能")
+                    self.go_back_to_list()
 
+            self.d.sleep(2)
             serial = self.d.serial
             subprocess.run(f"adb -s {serial} reboot", shell=True)
             print("  [Wait] 手機正在重啟中...")
@@ -170,70 +187,67 @@ class DeviceAdministration(CtsVerifier):
 
             self.d.app_start("com.android.cts.verifier")
             self.d.sleep(4)
-            self.scroll_and_click(test_name)
+            self.scroll_and_click(self.test_name)
 
-            if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=3):
+            if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=5):
                 self.click_pass()
             else:
-                print(f"{test_name} Failed")
+                print(f"{self.test_name} Failed")
                 self.click_fail()
 
 
         except Exception as e:
-            print(f"  [Crash] {test_name} 發生意外錯誤: {e}")
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-            self.d.screenshot(f"Crash_{test_name}.jpg")
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
             self.go_back_to_list()
 
     def screen_lock_test(self):
-        test_name = "Screen Lock Test"
+        self.test_name = "Screen Lock Test"
 
         try:
-            if not self.scroll_and_click(test_name): return
+            if not self.scroll_and_click(self.test_name): return
 
             self.set_screen_lock()
             self.d.sleep(2)
 
-            self.d.app_start("com.android.cts.verifier")
-            self.d.sleep(2)
-
             self.d(text="Force Lock").click()
             self.d.sleep(1)
-            self.d.swipe(0.5, 0.5, 0.5, 1.0)
-            self.d(resourceId="com.android.settings:id/restricted_action").click()
-            self.d.sleep(3)
 
+            info = "Activating this admin app will allow the app CTS Verifier to perform the following operations:"
+            icon = self.d(resourceId="com.android.settings:id/admin_icon")
+            if icon.wait(3) and self.d(text=info).exists:
+                self.d(scrollable=True).scroll.to(resourceId="com.android.settings:id/restricted_action")
+                self.d(resourceId="com.android.settings:id/restricted_action").click()
+                self.d.sleep(2)
 
             self.unlock_device()
 
-            if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=3):
+            if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=5):
                 self.click_pass()
             else:
-                print(f"{test_name} Failed")
+                print(f"{self.test_name} Failed")
                 self.click_fail()
 
             self.d.sleep(1)
-            self.remove_screen_lock()
+
 
         except Exception as e:
-            print(f"  [Crash] {test_name} 發生意外錯誤: {e}")
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-            self.d.screenshot(f"Crash_{test_name}.jpg")
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
             self.go_back_to_list()
 
-    # def aee(self):
-    #     self.remove_screen_lock()
-
+        finally:
+            self.remove_screen_lock()
 
 
 if __name__ == "__main__":
     task = DeviceAdministration()
-    task.failed_testcase()
     task.device_admin_tapjacking_test()
     task.device_admin_uninstall_test()
     task.policy_serialization_test()
     task.screen_lock_test()
-    # task.aee()
 

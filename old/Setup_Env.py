@@ -1,4 +1,3 @@
-# 檔案名稱: 1_Setup_Env.py
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -12,7 +11,9 @@ import glob  # [新增] 用來搜尋檔案
 class EnvironmentSetup:
     def __init__(self):
 
-        self.serial = self._select_device()
+        self.serial_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "current_serial.txt")
+
+        self.serial = self._get_or_select_serial()
         self.base_url = "http://10.57.42.97/XTS/CTS/"
         self.save_dir = r"D:\Python\CSTV\Downloads"
 
@@ -20,6 +21,34 @@ class EnvironmentSetup:
         # 截圖顯示檔名類似: android-cts-verifier-14_r10-linux_x86-arm.zip
         self.target_keyword = "android-cts-verifier"
         self.target_ext = ".zip"
+
+    def _get_or_select_serial(self):
+        """ [新增] 核心邏輯：有檔案就讀檔，沒檔案就選裝置並存檔 """
+
+        # 1. 檢查是否有暫存檔 (代表 Setup 已經跑過了)
+        if os.path.exists(self.serial_file):
+            try:
+                with open(self.serial_file, "r", encoding="utf-8") as f:
+                    saved_serial = f.read().strip()
+                if saved_serial:
+                    # 這裡為了畫面乾淨，通常讀檔成功不印 Log，或只印 Info
+                    # print(f"  [Info] 讀取到快取序號: {saved_serial} (略過選擇)")
+                    return saved_serial
+            except Exception:
+                pass  # 讀取失敗就算了，乖乖重選
+
+        # 2. 如果沒檔案，執行原本的選擇邏輯
+        selected_serial = self._select_device()
+
+        # 3. 選完之後，立刻存檔！(傳給下一個腳本用)
+        try:
+            with open(self.serial_file, "w", encoding="utf-8") as f:
+                f.write(selected_serial)
+        except Exception as e:
+            print(f"  [Warning] 無法寫入序號暫存檔: {e}")
+
+        return selected_serial
+
 
     def _select_device(self):
         """自動執行 adb devices 並讓使用者選擇"""
@@ -182,6 +211,15 @@ class EnvironmentSetup:
 
 
 if __name__ == "__main__":
+
+    serial_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "current_serial.txt")
+    if os.path.exists(serial_file_path):
+        try:
+            os.remove(serial_file_path)
+            # print("  [Init] 已清除舊的序號暫存")
+        except:
+            pass
+
     setup = EnvironmentSetup()
     setup.create_folder()
     if setup.download_and_setup():

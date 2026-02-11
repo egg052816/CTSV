@@ -1,2 +1,5 @@
-__pycache__/ 
-*.pyc 
+Downloads/ 
+python_env/ 
+*.zip 
+execution_log.txt 
+current_serial.txt

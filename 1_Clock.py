@@ -1,25 +1,19 @@
 from auto import CtsVerifier
 import time
+import subprocess
 
 class Clock(CtsVerifier):
+    class_name = "Alarms and Timers Tests"
 
     def alarms_and_timers_tests(self):
 
-        if not self.scroll_and_click("Alarms and Timers Tests"):
+        if not self.scroll_and_click(self.class_name):
             print("[Fail] 無法進入 Alarms and Timers Tests，停止測試。")
-            return
+            self.go_back_to_list()
 
-            # 教學彈窗點擊ok
-        if self.d(text="OK").wait(timeout=3):
-            print("  [Info] 偵測到說明彈窗，嘗試關閉...")
-            self.d(text="OK").click()
-
-            # 檢查有沒有第一個測項 Show Alarms Test
-        if not self.d(text="Show Alarms Test").wait(timeout=3):
-            print("[Fail]沒看到子選單，停止測試。")
-            return
 
         # 依序執行測項
+        time.sleep(3)
         self.show_alarms_test()
         self.set_alarm_test()
         self.start_alarm_test()
@@ -27,273 +21,380 @@ class Clock(CtsVerifier):
         self.set_timer_test()
         self.start_timer_test()
         self.start_timer_with_ui_test()
-        print("=== All CLOCK Tests Finished ===")
+        self.clean_clock_data()
 
 
     def show_alarms_test(self):
-        test_name = "Show Alarms Test"
+        self.test_name = "Show Alarms Test"
 
-        # 1. 進入測項
-        if not self.enter_subtest(test_name): return
+        try:
+            # 1. 進入測項
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        # 2. 執行該測項獨有的動作
-        self.d(resourceId="com.android.cts.verifier:id/buttons").click()
+            # 2. 執行該測項獨有的動作
+            self.d.sleep(1)
+            self.d(resourceId="com.android.cts.verifier:id/buttons").click()
+            self.d.sleep(1)
 
-        # 3. 核心判定 (驗證畫面)
-        is_passed = False
-        if self.d(text="Alarms").wait(timeout=5) and self.d(text="Timers").exists and self.d(resourceId="com.google.android.deskclock:id/fab").exists:
-            is_passed = True
-        else:
-            self.click_fail()
-
-        # 4. 收尾 (返回並打勾)
-        self.d.press("back")  # 從 Clock App 回到 CTSV 詳細頁
-
-        # 確保回到了有 Pass 按鈕的頁面
-        if self.d(text="Show Alarms").exists:
-            if is_passed:
-                self.click_pass()
+            # 3. 核心判定 (驗證畫面)
+            timer = self.d(resourceId = "com.google.android.deskclock:id/tab_menu_timer")
+            is_passed = False
+            if self.d(textContains="Alarm").wait(timeout=5) and timer.exists and self.d(resourceId="com.google.android.deskclock:id/fab").exists:
+                is_passed = True
             else:
-                self.click_fail()
+                print(f"  [Fail] {self.test_name}頁面錯誤，測試失敗")
 
-        time.sleep(1)  # 緩衝一下
+            # 4. 收尾 (返回並打勾)
+            self.open_ctsv_from_recents()  # 從 Clock App 回到 CTSV 詳細頁
 
+            # 確保回到了有 Pass 按鈕的頁面
+            if self.d(text="Show Alarms").exists:
+                if is_passed:
+                    self.click_pass()
+                else:
+                    self.click_fail()
+
+            self.d.sleep(1)  # 緩衝一下
+
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
+
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
+
+            self.go_back_to_list()
 
     def set_alarm_test(self):
-        test_name = "Set Alarm Test"
-        if not self.enter_subtest(test_name): return
+        self.test_name = "Set Alarm Test"
+        self.d.watcher.stop()
 
-        self.d(resourceId="com.android.cts.verifier:id/buttons").click()
+        try:
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        is_passed = False
-        if self.d(text="Select time").wait(timeout=5) and self.d(resourceId="com.google.android.deskclock:id/material_clock_face").exists and self.d(resourceId = "com.google.android.deskclock:id/material_clock_period_toggle").exists:
-            is_passed = True
-        else:
-            self.click_fail()
+            time.sleep(1)
+            self.d(resourceId="com.android.cts.verifier:id/buttons").click()
 
-        self.d.press("back")
-        self.d.press("back")
+            is_passed = False
+            clock = self.d(resourceId="com.google.android.deskclock:id/material_clock_face")
+            if self.d(text="Select time").wait(5) and clock.exists and self.d(resourceId = "com.google.android.deskclock:id/material_clock_period_toggle").exists:
+                is_passed = True
+            else:
+                print(f"  [Fail] {self.test_name}頁面錯誤，測試失敗")
 
-        if self.d(text="Set Alarm").exists:
+            self.open_ctsv_from_recents()
+
             if is_passed:
                 self.click_pass()
             else:
                 self.click_fail()
 
-        time.sleep(1)
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
+
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
+
+            self.go_back_to_list()
 
 
     def start_alarm_test(self):
-        test_name = "Start Alarm Test"
-        if not self.enter_subtest(test_name): return
+        self.test_name = "Start Alarm Test"
 
-        self.d(text="Start Alarm").click()
+        try:
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        is_passed = False
-        alarm_is_pass = False
-        alarm_is_clean = False
+            time.sleep(1)
+            self.d(text="Start Alarm").click()
 
-        time.sleep(3)
-        current_app = self.d.app_current()  # 獲取當前 App 資訊
-        current_pkg = current_app.get('package')
+            is_passed = False
+            alarm_is_pass = False
+            alarm_is_clean = False
 
-        if current_pkg == "com.android.cts.verifier" and self.d(text="Start Alarm Test").exists and self.d(resourceId="com.android.cts.verifier:id/buttons").exists:
-            is_passed = True
-
-        for i in range(40):
-            if self.d(text="Stop").exists:
-                self.d(text="Stop").click()
-                alarm_is_pass = True
-                break
-            elif self.d(text="STOP").exists:
-                self.d(text="STOP").click()
-                alarm_is_pass = True
-                break
-
-            # 顯示進度，讓你知道程式還活著
-            print(".", end="", flush=True)
             time.sleep(3)
+            current_app = self.d.app_current()  # 獲取當前 App 資訊
+            current_pkg = current_app.get('package')
 
-        print("")  # 換行
+            if current_pkg == "com.android.cts.verifier" and self.d(text="Start Alarm Test").exists and self.d(
+                    resourceId="com.android.cts.verifier:id/buttons").exists:
+                is_passed = True
 
-        if not alarm_is_pass:
-            self.click_fail()
+            for i in range(40):
+                if self.d(text="Stop").exists:
+                    self.d(text="Stop").click()
+                    alarm_is_pass = True
+                    break
+                elif self.d(text="STOP").exists:
+                    self.d(text="STOP").click()
+                    alarm_is_pass = True
+                    break
 
-        time.sleep(1)
-        self.d(text="Verify").click()
+                # 顯示進度，讓你知道程式還活著
+                print(".", end="", flush=True)
+                time.sleep(3)
 
-        if self.d(text="Alarms").wait(timeout=5):
-            if not self.d(text=test_name).exists:
-                alarm_is_clean = True
+            print("")  # 換行
+
+            if not alarm_is_pass:
+                print(f"  [Fail] 鬧鐘計時失敗")
+                self.click_fail()
+
+            time.sleep(1)
+            self.d(text="Verify").click()
+
+            if self.d(textContains="Alarm").wait(timeout=5):
+                time.sleep(2)
+                if self.d(text="Start Alarm Test").exists():
+                    print("  [Fail] 介面異常，不該顯示設定鬧鐘")
+                else:
+                    alarm_is_clean = True
+                    print("  [Check] 測試正常，未顯示設定鬧鐘")
+            else:
+                print("  [Fail] 未跳轉至時鐘 App")
+
+            self.open_ctsv_from_recents()
+
+            if is_passed and alarm_is_pass and alarm_is_clean:
+                self.click_pass()
             else:
                 self.click_fail()
-        else:
-            self.click_fail()
 
-        self.d.press("back")
-        time.sleep(1)
+            self.d.sleep(1)
 
-        if is_passed and alarm_is_pass and alarm_is_clean:
-            self.click_pass()
-        else:
-            self.click_fail()
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-        time.sleep(1)
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
+            self.go_back_to_list()
 
     def full_alarm_test(self):
-        test_name = "Full Alarm Test"
-        if not self.enter_subtest(test_name): return
+        self.test_name = "Full Alarm Test"
 
-        self.d(text="Create Alarm").click()
+        try:
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        if not self.d(text="Alarms").wait(timeout=5):
-            self.d.press("back")
-            self.click_fail()
+            time.sleep(1)
+            self.d(resourceId="com.android.cts.verifier:id/buttons").click()
 
-        target_label = "Create Alarm Test"
-        target_time_part = "1:23"
-        is_passed = False
-        label = self.d(text=target_label).exists
-        time_set = self.d(textContains=target_time_part).exists
-        switch_on = self.d(resourceId="com.google.android.deskclock:id/onoff", checked=True).exists
+            if not self.d(textContains="Alarm").wait(timeout=5):
+                self.open_ctsv_from_recents()
+                self.click_fail()
 
-        if label and time_set and switch_on:
-            is_passed = True
+            target_label = "Create Alarm Test"
+            target_time_part = "1:23"
+            is_passed = False
+            label = self.d(text=target_label).exists()
+            time_set = self.d(textContains=target_time_part).exists()
+            switch_on = self.d(resourceId="com.google.android.deskclock:id/onoff", checked=True).wait(5)
 
-        self.d.press("back")
-        time.sleep(1)
+            print(f"  [Info] label:{label}, time_set:{time_set}, switch_on:{switch_on}")
 
-        if self.d(text=test_name).exists:
+            time.sleep(1)
+
+            if label and time_set and switch_on:
+                is_passed = True
+
+            self.open_ctsv_from_recents()
+
             if is_passed:
                 self.click_pass()
             else:
                 self.click_fail()
 
-        time.sleep(1)
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
+
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
+
+            self.go_back_to_list()
 
 
     def set_timer_test(self):
-        test_name = "Set Timer Test"
-        if not self.enter_subtest(test_name): return
+        self.test_name="Set Timer Test"
 
-        self.d(text="Set Timer").click()
-        is_passed = False
+        try:
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        if self.d(text="Timers").wait(timeout=5) and self.d(resourceId="com.google.android.deskclock:id/timer_setup_time").exists and self.d(text="World Clock").exists:
-            is_passed = True
+            time.sleep(1)
+            self.d(text="Set Timer").click()
+            time.sleep(1)
+            is_passed = False
+            setup_time = self.d(resourceId="com.google.android.deskclock:id/timer_setup_time")
+            setup_digits = self.d(resourceId = "com.google.android.deskclock:id/timer_setup_digits")
 
-        self.d.press("back")
-        time.sleep(1)
-        if not self.d(resourceId="com.android.cts.verifier:id/fail_button").exists:
-            self.d.press("back")
+            if self.d(textContains="Timer").wait(5) and setup_time.exists and setup_digits.exists:
+                is_passed = True
+
+            self.open_ctsv_from_recents()
+
+            if not self.d(resourceId="com.android.cts.verifier:id/fail_button").exists:
+                self.open_ctsv_from_recents()
+
+            if self.d(text=self.test_name).exists and self.d(resourceId="com.android.cts.verifier:id/buttons").exists:
+                if is_passed:
+                    self.click_pass()
+                else:
+                    self.click_fail()
+
             time.sleep(1)
 
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-        if self.d(text=test_name).exists and self.d(resourceId="com.android.cts.verifier:id/buttons").exists:
-            if is_passed:
-                self.click_pass()
-            else:
-                self.click_fail()
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
-        time.sleep(1)
-
+            self.go_back_to_list()
 
     def start_timer_test(self):
-        test_name = "Start Timer Test"
-        if not self.enter_subtest(test_name): return
+        self.test_name = "Start Timer Test"
 
-        self.d(text="Start Timer").click()
+        try:
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        is_passed = False
-        is_notification_clean = False
+            time.sleep(1)
+            self.d(text="Start Timer").click()
 
-        for i in range(35):
-            if self.d(text="STOP").exists:
-                self.d(text="STOP").click()
-                is_passed = True
-                break
-            elif self.d(text="Stop").exists:
-                self.d(text="Stop").click()
-                is_passed = True
-                break
-            time.sleep(2)
+            is_passed = False
+            is_notification_clean = False
 
-        self.d.open_notification()
-        time.sleep(1)
+            for i in range(35):
+                if self.d(text="STOP").exists:
+                    self.d(text="STOP").click()
+                    is_passed = True
+                    break
+                elif self.d(text="Stop").exists:
+                    self.d(text="Stop").click()
+                    is_passed = True
+                    break
+                time.sleep(2)
 
-        if not self.d(text="Start Timer Test").exists:
-            is_notification_clean = True
+            self.d.open_notification()
+            time.sleep(1)
 
-        self.d.press("back")
-        time.sleep(1)
+            if not self.d(text="Start Timer Test").exists:
+                is_notification_clean = True
 
-        if self.d(text=test_name).exists:
-            if is_passed and is_notification_clean:
-                self.click_pass()
-            else:
-                self.click_fail()
+            self.open_ctsv_from_recents()
 
-        time.sleep(1)
+
+            if self.d(text=self.test_name).exists:
+                if is_passed and is_notification_clean:
+                    self.click_pass()
+                else:
+                    self.click_fail()
+
+            time.sleep(1)
+
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
+
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
+
+            self.go_back_to_list()
 
 
     def start_timer_with_ui_test(self):
-        test_name = "Start Timer With UI Test"
-        if not self.enter_subtest(test_name): return
+        self.test_name = "Start Timer With UI Test"
 
-        self.d(text="Start Timer").click()
+        try:
+            if not self.enter_subtest(self.test_name):
+                print(f"  [Fail] 未能進入{self.test_name}測項")
+                self.go_back_to_list()
+                self.scroll_and_click(self.class_name)
+                return False
 
-        # 檢查是否成功跳轉到時鐘 App，並且標題正確
-        # 根據 image_4bc87b.png，計時器標題應為 "Start Timer Test"
-        if not self.d(text="Start Timer Test").wait(timeout=5):
-            print("  [Fail] 未能啟動計時器或未跳轉至時鐘介面")
-            self.click_fail()
-            return
+            time.sleep(1)
+            self.d(text="Start Timer").click()
 
-        print("  [Check] 計時器已啟動，標題顯示正確 (Start Timer Test)")
+            # 檢查是否成功跳轉到時鐘 App，並且標題正確
+            # 根據 image_4bc87b.png，計時器標題應為 "Start Timer Test"
+            if not self.d(text="Start Timer Test").wait(timeout=5):
+                print("  [Fail] 未能啟動計時器或未跳轉至時鐘介面")
+                self.click_fail()
+                return False
 
-        # === Step 3: 等待 30 秒並點擊停止 ===
-        print("  [Wait] 正在等待 30 秒倒數結束...")
+            print("  [Check] 計時器已啟動，標題顯示正確 (Start Timer Test)")
 
-        is_timer_finished = False
+            # === Step 3: 等待 30 秒並點擊停止 ===
+            print("  [Wait] 正在等待 30 秒倒數結束...")
 
-        # 使用迴圈每秒檢查一次 "Stop" 按鈕是否出現
-        for i in range(30):
-            # 情況 A: 按鈕有文字 "Stop" 或 "STOP"
-            if self.d(text="Stop").exists:
-                print(f"  [Action] 計時結束 (第 {i} 秒) -> 點擊 Stop")
-                self.d(text="Stop").click()
-                is_timer_finished = True
-                break
-            elif self.d(text="STOP").exists:
-                print(f"  [Action] 計時結束 (第 {i} 秒) -> 點擊 STOP")
-                self.d(text="STOP").click()
-                is_timer_finished = True
-                break
-            # 情況 B: 按鈕是圖示，檢查 content-desc (無障礙標籤)
-            # 根據 Android 原生時鐘，停止按鈕通常會有 desc="Stop"
-            elif self.d(description="Stop").exists:
-                print(f"  [Action] 計時結束 (第 {i} 秒) -> 點擊 Stop 圖示")
-                self.d(description="Stop").click()
-                is_timer_finished = True
-                break
+            is_timer_finished = False
 
-            # 還沒響，繼續等
-            if i % 5 == 0: print(f"倒數中... {30 - i if 30 - i > 0 else 0}s")
+            # 使用迴圈每秒檢查一次 "Stop" 按鈕是否出現
+            for i in range(30):
+                # 情況 A: 按鈕有文字 "Stop" 或 "STOP"
+                if self.d(text="Stop").exists:
+                    print(f"  [Action] 計時結束  -> 點擊 Stop")
+                    self.d(text="Stop").click()
+                    is_timer_finished = True
+                    break
+                elif self.d(text="STOP").exists:
+                    print(f"  [Action] 計時結束  -> 點擊 STOP")
+                    self.d(text="STOP").click()
+                    is_timer_finished = True
+                    break
+                # 情況 B: 按鈕是圖示，檢查 content-desc (無障礙標籤)
+                # 根據 Android 原生時鐘，停止按鈕通常會有 desc="Stop"
+                elif self.d(description="Stop").exists:
+                    print(f"  [Action] 計時結束  -> 點擊 Stop 圖示")
+                    self.d(description="Stop").click()
+                    is_timer_finished = True
+                    break
+
+                # 還沒響，繼續等
+                if i % 5 == 0: print(f"倒數中...")
+                time.sleep(1)
+
+            if not is_timer_finished:
+                self.click_fail()
+
+            self.open_ctsv_from_recents()
+
+
+            if self.d(text=self.test_name).exists and self.d(resourceId="com.android.cts.verifier:id/buttons").exists:
+                self.click_pass()
+            else:
+                self.click_fail()
+
             time.sleep(1)
 
-        if not is_timer_finished:
-            self.click_fail()
+        except Exception as e:
+            print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
-        self.d.press("back")
-        time.sleep(1)
+            self.d.screenshot(f"Crash_{self.test_name}.jpg")
 
-        if self.d(text=test_name).exists and self.d(resourceId="com.android.cts.verifier:id/buttons").exists:
-            self.click_pass()
-        else:
-            self.click_fail()
+            self.go_back_to_list()
 
-        time.sleep(1)
+    def clean_clock_data(self):
+        cmd = f"adb -s {self.d.serial} shell pm clear com.google.android.deskclock"
+        subprocess.run(cmd, shell=True, check=True)
+        print("  [Clean] 已清除所有鬧鐘數據")
 
 if __name__ == "__main__":
     task = Clock()
