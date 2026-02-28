@@ -1,10 +1,18 @@
 from auto import CtsVerifier
 import uiautomator2 as u2
 import subprocess
+import json
+import argparse
 import os
 import time
 
 class DeviceAdministration(CtsVerifier):
+    test_mapping = {
+        "Device Admin Tapjacking Test": "device_admin_tapjacking_test",
+        "Device Admin Uninstall Test": "device_admin_uninstall_test",
+        "Policy Serialization Test": "policy_serialization_test",
+        "Screen Lock Test": "screen_lock_test"
+    }
 
     def device_admin_tapjacking_test(self):
         self.test_name = "Device Admin Tapjacking Test"
@@ -82,24 +90,38 @@ class DeviceAdministration(CtsVerifier):
 
             self.d(resourceId="com.android.cts.verifier:id/enable_device_admin_button").click()
             self.d.sleep(1)
-            self.d.swipe(0.5, 0.5, 0.5, 1.0)
-            self.d.sleep(1)
-            self.d(resourceId="com.android.settings:id/restricted_action").click()
+
+            if self.d(scrollable=True).scroll.to(resourceId="com.android.settings:id/restricted_action"):
+                self.d.sleep(1)
+                self.d(resourceId="com.android.settings:id/restricted_action").click()
+            else:
+                self.d.press("back")
+                print("  [Fail] 找不到 Activate this device admin app 按鈕")
+                self.click_fail()
+
             self.d.sleep(1)
 
 
             self.d(resourceId="com.android.cts.verifier:id/open_app_details_button").click()
             self.d.sleep(1)
             self.d(textContains="Uninstall").click()
-            self.d.swipe(0.5, 0.5, 0.5, 1.0)
-            self.d.sleep(3)
-            self.d(resourceId="com.android.settings:id/restricted_action").click()
-            self.d.sleep(2)
 
+            if self.d(scrollable=True).scroll.to(resourceId="com.android.settings:id/restricted_action"):
+                self.d.sleep(1)
+                self.d(resourceId="com.android.settings:id/restricted_action").click()
+            else:
+                self.d.press("back")
+                self.d.sleep(0.5)
+                self.d.press("back")
+
+                print("  [Fail] 找不到 Deactivate & uninstall 按鈕")
+                self.click_fail()
+
+            self.d.sleep(3)
             if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=3):
                 self.click_pass()
             else:
-                print(f"  [{self.test_name}] Failed")
+                print(f"  [Fail] {self.test_name} 測試失敗")
                 self.click_fail()
 
         except Exception as e:
@@ -243,11 +265,41 @@ class DeviceAdministration(CtsVerifier):
         finally:
             self.remove_screen_lock()
 
+    def run_specific_tests(self, fail_items):
+        """ 只跑失敗的 function """
+        if not self.scroll_and_click(self.test_name):
+            return
+
+        for item in fail_items:
+            if not self.d(text=item).exists(3):
+                print(f"  [Skip] 畫面上找不到測項 '{item}'，可能是 Android 版本不支援，跳過重試。")
+                continue
+
+            if item in self.test_mapping:
+                func_name = self.test_mapping[item]
+                print(f"  [Retry Action] 正在重跑函數: {func_name}")
+                # 利用 getattr 動態呼叫函數
+                getattr(self, func_name)()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--retry", type=str, help="JSON list of failed subtests")
+    args = parser.parse_args()
+
     task = DeviceAdministration()
-    task.device_admin_tapjacking_test()
-    task.device_admin_uninstall_test()
-    task.policy_serialization_test()
-    task.screen_lock_test()
+    try:
+        if args.retry:
+            fail_list = json.loads(args.retry)
+            task.run_specific_tests(fail_list)
+        else:
+            task.device_admin_tapjacking_test()
+            task.device_admin_uninstall_test()
+            task.policy_serialization_test()
+            task.screen_lock_test()
+    finally:
+        try:
+            task.d.stop_uiautomator()
+        except:
+            pass
+
 

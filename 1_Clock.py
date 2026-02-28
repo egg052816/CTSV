@@ -1,16 +1,27 @@
 from auto import CtsVerifier
 import time
+import json
+import argparse
 import subprocess
 
 class Clock(CtsVerifier):
     class_name = "Alarms and Timers Tests"
+
+    test_mapping = {
+        "Show Alarms Test": "show_alarms_test",
+        "Set Alarm Test": "set_alarm_test",
+        "Start Alarm Test": "start_alarm_test",
+        "Full Alarm Test": "full_alarm_test",
+        "Set Timer Test": "set_timer_test",
+        "Start Timer Test": "start_timer_test",
+        "Start Timer With UI Test": "start_timer_with_ui_test"
+    }
 
     def alarms_and_timers_tests(self):
 
         if not self.scroll_and_click(self.class_name):
             print("[Fail] 無法進入 Alarms and Timers Tests，停止測試。")
             self.go_back_to_list()
-
 
         # 依序執行測項
         time.sleep(3)
@@ -88,6 +99,9 @@ class Clock(CtsVerifier):
             else:
                 print(f"  [Fail] {self.test_name}頁面錯誤，測試失敗")
 
+            self.d.sleep(2)
+            self.d(resourceId="com.google.android.deskclock:id/material_timepicker_cancel_button").click()
+            self.d.sleep(1)
             self.open_ctsv_from_recents()
 
             if is_passed:
@@ -97,13 +111,15 @@ class Clock(CtsVerifier):
 
             time.sleep(1)
 
+            self.d.watcher.start()
+
         except Exception as e:
             print(f"  [Crash] {self.test_name} 發生意外錯誤: {e}")
 
             self.d.screenshot(f"Crash_{self.test_name}.jpg")
+            self.d.watcher.start()
 
             self.go_back_to_list()
-
 
     def start_alarm_test(self):
         self.test_name = "Start Alarm Test"
@@ -192,9 +208,12 @@ class Clock(CtsVerifier):
             time.sleep(1)
             self.d(resourceId="com.android.cts.verifier:id/buttons").click()
 
-            if not self.d(textContains="Alarm").wait(timeout=5):
+            if not self.d(resourceId="com.google.android.deskclock:id/action_bar_title").wait(timeout=5):
                 self.open_ctsv_from_recents()
                 self.click_fail()
+
+            self.d(scrollable=True).scroll.to(text="Create Alarm Test")
+            time.sleep(1)
 
             target_label = "Create Alarm Test"
             target_time_part = "1:23"
@@ -342,7 +361,7 @@ class Clock(CtsVerifier):
             print("  [Check] 計時器已啟動，標題顯示正確 (Start Timer Test)")
 
             # === Step 3: 等待 30 秒並點擊停止 ===
-            print("  [Wait] 正在等待 30 秒倒數結束...")
+            print("  [Wait] 正在等待 30 秒倒數...")
 
             is_timer_finished = False
 
@@ -394,9 +413,43 @@ class Clock(CtsVerifier):
     def clean_clock_data(self):
         cmd = f"adb -s {self.d.serial} shell pm clear com.google.android.deskclock"
         subprocess.run(cmd, shell=True, check=True)
-        print("  [Clean] 已清除所有鬧鐘數據")
+        print("  [Clean] 已清除所有鬧鐘")
+
+    def run_specific_tests(self, fail_items):
+        """ 只跑失敗的 function """
+        if not self.scroll_and_click(self.class_name):
+            return
+
+        for item in fail_items:
+            if not self.d(text=item).exists(3):
+                print(f"  [Skip] 畫面上找不到測項 '{item}'，可能是 Android 版本不支援，跳過重試。")
+                continue
+
+            if item in self.test_mapping:
+                func_name = self.test_mapping[item]
+                print(f"  [Retry Action] 正在重跑函數: {func_name}")
+                # 利用 getattr 動態呼叫函數
+                getattr(self, func_name)()
+
+        self.clean_clock_data()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--retry", type=str, help="JSON list of failed subtests")
+    args = parser.parse_args()
+
     task = Clock()
-    task.alarms_and_timers_tests()
-    task.click_final_pass()
+    try:
+        if args.retry:
+            fail_list = json.loads(args.retry)
+            task.run_specific_tests(fail_list)
+        else:
+            task.alarms_and_timers_tests()
+
+        task.click_final_pass()
+
+    finally:
+        try:
+            task.d.stop_uiautomator()
+        except:
+            pass

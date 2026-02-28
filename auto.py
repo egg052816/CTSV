@@ -18,6 +18,9 @@ class CtsVerifier:
         # 2. 使用重試機制連線，取代原本的 u2.connect(self.serial)
         self.d = self._connect_device_with_retry()
 
+        self.os_version = self.d.device_info['version']
+        print(f"  [Info] 目前測試設備的版本為: Android {self.os_version}")
+
         # 設定全域等待時間
         self.d.wait_timeout = 10.0
 
@@ -31,12 +34,12 @@ class CtsVerifier:
         self.d.watcher("AutoClicker").when('//*[@text="OK"]').click()
         self.d.watcher("AutoClicker").when('//*[@text="Got it"]').click()
         self.d.watcher("AutoClicker").when('//*[@text="No thanks"]').click()
-        # self.d.watcher("AutoClicker").when('//*[@text="Confirm"]').click()
+        # self.d.watcher("AutoClicker").when('//*[@text="Confirm"]').click() # 設定密碼會有問題
         self.d.watcher("AutoClicker").when('//*[@text="ALWAYS"]').click()
+        # self.d.watcher("AutoClicker").when('//*[@text="Turn on location"]').click()
         self.d.watcher.start()
 
     def scroll_and_click(self, target_text):
-        print(f"  [Nav] Searching for '{target_text}' ")
 
         # 設定最大重試次數 (防止無限迴圈)
         max_retries = 3
@@ -46,7 +49,7 @@ class CtsVerifier:
                 # === 1. 快速檢查當前畫面 ===
                 if self.d(text=target_text).exists:
                     self.d(text=target_text).click()
-                    print(f"  [Nav] Found and Clicked: '{target_text}'")
+                    print(f"\n  [TestCase] Searching for:'{target_text}'")
                     return True
 
                 # 檢查是否有捲軸，沒有捲軸且沒找到就是失敗
@@ -99,7 +102,7 @@ class CtsVerifier:
             print(f"  [Pass] {self.test_name} 測試成功" )
             self.d(resourceId=self.btn_pass).click()
         else:
-            print("[Fail] 無法點擊 Pass 按鈕")
+            print("  [Fail] 無法點擊 Pass 按鈕")
 
             package_name = "com.android.cts.verifier"
             # 這是 CTS Verifier 的主進入點 Activity
@@ -112,7 +115,7 @@ class CtsVerifier:
             print(f"  [Fail] {self.test_name} 測試異常，判定失敗" )
             self.d(resourceId=self.btn_fail).click()
         else:
-            print("[Fail] 無法點擊 Fail 按鈕")
+            print("  [Fail] 無法點擊 Fail 按鈕")
 
             package_name = "com.android.cts.verifier"
             # 這是 CTS Verifier 的主進入點 Activity
@@ -128,7 +131,7 @@ class CtsVerifier:
             print(f"\n>>> Entering Test: {text_name}")
             return True
         else:
-            print(f"[Fail] 找不到子測項 {text_name}")
+            print(f"  [Fail] 找不到子測項 {text_name}")
             return False
 
     def byod_enter_subtest(self, text_name):
@@ -145,10 +148,10 @@ class CtsVerifier:
             # 使用 scroll.to 直接滾動到目標文字出現
             if sub_list.scroll.to(text=text_name):
                 self.d(text=text_name).click()
-                print(f">>> Entering Test: {text_name}")
+                print(f"\n>>> Entering Test: {text_name}")
                 return True
         except Exception as e:
-            print(f" [Nav] 滾動尋找 {text_name} 失敗: {e}")
+            print(f"  [Nav] 滾動尋找 {text_name} 失敗: {e}")
 
         # 備案：如果 scroll.to 沒反應，手動強制下滑搜尋
         for _ in range(5):
@@ -211,7 +214,7 @@ class CtsVerifier:
                 found_unlock = True
                 break
 
-            print("    [Nav] 目前未發現 'Device unlock'...")
+            print("  [Nav] 目前未發現 'Device unlock'...")
             # 獲取螢幕尺寸來計算滑動座標
             w, h = self.d.window_size()
             # 從螢幕 60% 高度滑到 40% 高度，steps=50 代表滑動速度極慢，減少慣性
@@ -219,10 +222,10 @@ class CtsVerifier:
             self.d.sleep(1)
 
         if found_unlock:
-            print("    [Click] 找到 Device unlock，執行點擊")
+            print("  [Click] 找到 Device unlock，執行點擊")
             target_layout.click()
         else:
-            print("    [Fail] 找不到 'Device unlock' 選項")
+            print("  [Fail] 找不到 'Device unlock' 選項")
             return
 
         self.d.sleep(1)
@@ -308,21 +311,45 @@ class CtsVerifier:
             self.d.screen_on()
             self.d.sleep(1)
 
+        max_retries = 5
+        retry_count = 0
+
         print("    -> 滑動解鎖頁面 (Swipe Up)...")
         self.d.swipe(0.5, 0.8, 0.5, 0.3)
         self.d.sleep(0.5)
 
-        if not (self.d(resourceId="com.android.systemui:id/lockPatternView").exists or self.d(text="Emergency").exists ):
-            self.d.swipe(0.5, 0.8, 0.5, 0.3)
-            self.d.sleep(1)
+        while retry_count < max_retries:
+            # 檢查是否已看到密碼輸入介面
+            has_pattern = self.d(resourceId="com.android.systemui:id/lockPatternView").exists
+            has_emergency = self.d(text="Emergency").exists
+            has_pin = self.d(resourceId="com.android.systemui:id/key1").exists or self.d(text="1").exists
+
+            if has_pattern or has_emergency or has_pin:
+                print(f"    -> [Success] 已進入解鎖介面 (嘗試第 {retry_count} 次)")
+                break
+
+            print(f"    -> 滑動解鎖頁面 (第 {retry_count + 1} / {max_retries} 次 Swipe Up)...")
+            if retry_count == 0:
+                os.system(f"adb -s {self.serial} shell input keyevent 82")
+            else:
+                self.d.swipe(0.5, 0.8, 0.5, 0.2, steps=20)
+            self.d.sleep(1)  # 給系統一點轉場反應時間
+
+            if retry_count % 2:
+                self.d.click(0.5, 0.5)
+
+            retry_count += 1
+
+        if retry_count >= max_retries:
+            print("  [Fail] 已達到最大滑動次數,螢幕解鎖失敗")
 
         # 識別並解鎖
         if self.d(resourceId="com.android.systemui:id/lockPatternView").exists:
-            print("    [Unlock] 偵測到圖形鎖，繪製 L 型...")
+            print("  [Unlock] 偵測到圖形鎖，繪製 L 型...")
             self._draw_l_shape_pattern_lockscreen()
 
         elif self.d(resourceId="com.android.systemui:id/key1").exists or self.d(text="1").exists:
-            print("    [Unlock] 偵測到 PIN 碼鍵盤，輸入 1234...")
+            print("  [Unlock] 偵測到 PIN 碼鍵盤，輸入 1234...")
             self._click_pin_buttons("1234")
             self.d.sleep(0.5)
             if self.d(resourceId="com.android.systemui:id/key_enter").exists:
@@ -331,12 +358,12 @@ class CtsVerifier:
                 self.d(description="Enter").click()
 
         elif self.d(className="android.widget.EditText").exists:
-            print("    [Unlock] 偵測到密碼輸入框，輸入 Foxconn123...")
+            print("  [Unlock] 偵測到密碼輸入框，輸入 Foxconn123...")
             self.d.send_keys("Foxconn123")
             self.d.sleep(0.5)
             self.d.press("enter")
         else:
-            print("    [Info] 似乎已解鎖，或無密碼 (Swipe Only)。")
+            print("  [Info] 似乎已解鎖，或無密碼 (Swipe Only)。")
 
         self.d.sleep(1)
         print("  [System] 解鎖動作完成")
@@ -355,7 +382,7 @@ class CtsVerifier:
                 found_unlock = True
                 break
 
-            print("    [Nav] 尚未發現 'Device unlock'...")
+            print("  [Nav] 尚未發現 'Device unlock'...")
             # 獲取螢幕尺寸來計算滑動座標
             w, h = self.d.window_size()
             # 從螢幕 60% 高度滑到 40% 高度，steps=50 代表滑動速度極慢，減少慣性
@@ -363,10 +390,10 @@ class CtsVerifier:
             self.d.sleep(1)
 
         if found_unlock:
-            print("    [Click] 已點擊 Device unlock 選項")
+            print("  [Click] 已點擊 Device unlock 選項")
             target_layout.click()
         else:
-            print("    [Fail] 找不到 'Device unlock' 選項")
+            print("  [Fail] 找不到 'Device unlock' 選項")
             return
 
         self.d.sleep(1)
@@ -377,7 +404,7 @@ class CtsVerifier:
                 found_lock = True
                 break
 
-            print("    [Nav] 尚未發現 'Screen lock'，微距滑動...")
+            print("  [Nav] 尚未發現 'Screen lock'...")
             w, h = self.d.window_size()
             self.d.swipe(0.5 * w, 0.6 * h, 0.5 * w, 0.4 * h, steps=50)
             self.d.sleep(1)
@@ -385,7 +412,7 @@ class CtsVerifier:
         if found_lock:
             self.d(text="Screen lock").click()
         else:
-            print("    [Fail] 找不到 'Screen lock' 選項")
+            print("  [Fail] 找不到 'Screen lock' 選項")
             return
 
         self.d.sleep(1)
@@ -403,7 +430,7 @@ class CtsVerifier:
             print("  [Info] 偵測到選單列表 (Swipe/PIN)，代表無需驗證")
 
         # =========================================================
-        # 🔒 只有「不在」清單頁面時，才執行身份驗證
+        #  只有「不在」清單頁面時，才執行身份驗證
         # =========================================================
         if not is_in_selection_menu:
             print("  [Auth] 未在清單頁，判定需要身份驗證...")
@@ -413,13 +440,13 @@ class CtsVerifier:
             title_obj = self.d(resourceId="com.android.settings:id/suc_layout_title")
             if title_obj.exists:
                 title_text = title_obj.get_text()
-                print(f"    [Info] 驗證頁標題: {title_text}")
+                print(f"  [Info] 驗證頁標題: {title_text}")
 
             # --- 分流處理 ---
 
             # 情況 A: PIN 碼 (標題有 PIN，或沒標題但有 PIN 字樣且不在選單模式)
             if "PIN" in title_text or (not title_text and self.d(textContains="PIN").exists):
-                print("    [Action] 輸入 PIN 碼 (1234)...")
+                print("  [Action] 輸入 PIN 碼 (1234)...")
                 self._input_text_lock("1234")
                 self.d.press("enter")
                 self.d.sleep(1)
@@ -427,19 +454,19 @@ class CtsVerifier:
             # 情況 B: 密碼 (Password)
             elif "Password" in title_text or self.d(className="android.widget.EditText").exists:
                 # 如果標題沒寫 PIN 但有輸入框，或者是 Password，就輸密碼
-                print("    [Action] 輸入密碼 (Foxconn123)...")
+                print("  [Action] 輸入密碼 (Foxconn123)...")
                 self._input_text_lock("Foxconn123")
                 self.d.press("enter")
                 self.d.sleep(1)
 
             # 情況 C: 圖形鎖 (Pattern)
             elif "Pattern" in title_text or self.d(resourceId="com.android.settings:id/lockPattern").exists:
-                print("    [Action] 繪製圖形鎖...")
+                print("  [Action] 繪製圖形鎖...")
                 self._draw_l_shape_pattern()
                 self.d.sleep(1)
 
             else:
-                print("    [Warning] 無法識別鎖定類型，嘗試盲測尋找 None...")
+                print("  [Warning] 無法識別鎖定類型，嘗試盲測尋找 None...")
 
         # 等待驗證後的轉場 (如果有驗證的話)
         self.d.sleep(1.5)
@@ -455,7 +482,7 @@ class CtsVerifier:
 
         # 如果因為螢幕小被擠到下面，嘗試滑動找 None
         if not none_option.exists:
-            print("    [Nav] 尋找 None 選項中 (滑動)...")
+            print("  [Nav] 尋找 None 選項中 (滑動)...")
             self.d(scrollable=True).scroll.to(text="None")
 
         if none_option.exists(timeout=3):
@@ -464,7 +491,7 @@ class CtsVerifier:
 
             # 處理確認彈窗 (Remove device protection?)
             if self.d(textMatches="(?i)Delete|Remove|Yes|Clear").wait(timeout=3):
-                print("    [Confirm] 確認移除...")
+                print("  [Confirm] 確認移除...")
                 if self.d(resourceId="android:id/button1").exists:
                     self.d(resourceId="android:id/button1").click()
                 else:
@@ -498,7 +525,7 @@ class CtsVerifier:
             p7 = (left + w * 0.5, top + h * 2.5)
             p8 = (left + w * 1.5, top + h * 2.5)
             p9 = (left + w * 2.5, top + h * 2.5)
-            self.d.swipe_points([p1, p4, p7, p8, p9], duration=0.4)
+            self.d.swipe_points([p1, p4, p7, p8, p9], duration=0.2)
 
     def _click_pin_buttons(self, pin_code):
         """ 模擬手指點擊 PIN 碼按鈕 """
@@ -729,14 +756,14 @@ class CtsVerifier:
             if not scrolled:
                 # A. 沒滑動 = 撞牆了 (到底 or 到頂)
                 stuck_count += 1
-                print(f"    [Nav] Hit {direction_str} edge (Stuck: {stuck_count}), switching direction.")
+                print(f"  [Nav] Hit {direction_str} edge (Stuck: {stuck_count}), switching direction.")
 
                 # 自動反轉方向
                 is_forward = not is_forward
 
                 # 如果連續兩次都滑不動 (代表頁面根本不能滑，或卡死)，就直接放棄
                 if stuck_count >= 2:
-                    print("    [Nav] 頁面無法捲動 (上下都卡住)，停止搜尋。")
+                    print("  [Nav] 頁面無法捲動 (上下都卡住)，停止搜尋。")
                     break
 
                 # 撞牆後這回合不算找過，直接進下一圈 (換方向滑)
@@ -822,27 +849,27 @@ class CtsVerifier:
         try:
             obj = self.d(textContains=text)
             if not obj.exists:
-                print(f" [Nav][L{level}][ClickFail] '{text}' not exists at click time")
+                print(f"  [Nav][L{level}][ClickFail] '{text}' not exists at click time")
                 return False
             obj.click()
         except Exception as e:
-            print(f" [Nav][L{level}][ClickFail] '{text}' err={e}")
+            print(f"  [Nav][L{level}][ClickFail] '{text}' err={e}")
             return False
 
         self.d.sleep(settle)
 
         after = self._ui_hash()
         if after != before:
-            print(f" [Nav][L{level}] Click OK -> transitioned")
+            print(f"  [Nav][L{level}] Click OK -> transitioned")
             return True
 
         self.d.sleep(1.0)
         after2 = self._ui_hash()
         if after2 != before:
-            print(f" [Nav][L{level}] Click OK -> delayed transition")
+            print(f"  [Nav][L{level}] Click OK -> delayed transition")
             return True
 
-        print(f" [Nav][L{level}][Warn] Clicked '{text}' but no transition detected")
+        print(f"  [Nav][L{level}][Warn] Clicked '{text}' but no transition detected")
         return allow_stay
 
     def _ui_hash(self):
@@ -991,7 +1018,7 @@ class CtsVerifier:
 
     def _repair_environment(self):
         """ 當連線失敗時，嘗試修復環境的手段 """
-        print("    -> [Repair] 正在重啟手機端 Agent 與 ADB 轉發...")
+        print("    -> [Repair] 正在重啟手機端 Agent 與 ADB ...")
         try:
             # 強制停止手機上的 uiautomator 服務 (讓它下次重啟)
             subprocess.run(f"adb -s {self.serial} shell am force-stop com.github.uiautomator", shell=True)

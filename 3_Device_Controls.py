@@ -1,9 +1,16 @@
 import os
 from auto import CtsVerifier
 import subprocess
+import json
+import argparse
 
 class DeviceControls(CtsVerifier):
     class_name = "Controls Panel tests"
+
+    test_mapping = {
+        "0. Install helper app": "install_helper_app",
+
+    }
 
     def controls_panel_tests(self):
 
@@ -34,7 +41,7 @@ class DeviceControls(CtsVerifier):
                 cmd = f'adb -s {self.d.serial} install "{apk_path}"'
                 result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True, encoding='utf-8')
                 output_log = result.stdout.strip()
-                self.d.sleep(1)
+                self.d.sleep(2)
 
                 if "Success" in output_log:
                     print("  [Check] 偵測到 'Success'，判定測試通過。")
@@ -123,7 +130,7 @@ class DeviceControls(CtsVerifier):
                 print("  [Fail] 非首次測試，不該出現提示框")
                 self.go_back_to_list()
             else:
-                print(" [Check] 驗證成功:再次測試時無提示框")
+                print("  [Check] 驗證成功:再次測試時無提示框")
 
             self.d(resourceId="com.android.systemui:id/controls_close").click()
             self.d.sleep(3)
@@ -338,10 +345,40 @@ class DeviceControls(CtsVerifier):
 
             self.go_back_to_list()
 
+    def run_specific_tests(self, fail_items):
+        """ 只跑失敗的 function """
+        if not self.scroll_and_click(self.class_name):
+            return
+
+        for item in fail_items:
+            if not self.d(text=item).exists(3):
+                print(f"  [Skip] 畫面上找不到測項 '{item}'，可能是 Android 版本不支援，跳過重試。")
+                continue
+
+            if item in self.test_mapping:
+                func_name = self.test_mapping[item]
+                print(f"  [Retry Action] 正在重跑函數: {func_name}")
+                # 利用 getattr 動態呼叫函數
+                getattr(self, func_name)()
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--retry", type=str, help="JSON list of failed subtests")
+    args = parser.parse_args()
+
     task = DeviceControls()
-    task.controls_panel_tests()
-    task.click_final_pass()
-    task.remove_screen_lock()
+    try:
+        if args.retry:
+            fail_list = json.loads(args.retry)
+            task.run_specific_tests(fail_list)
+        else:
+            task.controls_panel_tests()
+
+        task.click_final_pass()
+    finally:
+        task.remove_screen_lock()
+        try:
+            task.d.stop_uiautomator()
+        except:
+            pass

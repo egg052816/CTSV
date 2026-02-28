@@ -1,6 +1,13 @@
 from auto import CtsVerifier
+import argparse
+import json
 
 class Features(CtsVerifier):
+    test_mapping = {
+        "Capture Content For Notes Tests": "capture_content_for_notes_tests",
+        "Clipboard Preview Test": "clipboard_preview_test"
+    }
+
     def capture_content_for_notes_tests(self):
 
         self.test_name = "Capture Content For Notes Tests"
@@ -70,7 +77,39 @@ class Features(CtsVerifier):
 
             self.go_back_to_list()
 
+    def run_specific_tests(self, fail_items):
+        """ 只跑失敗的 function """
+        if not self.scroll_and_click(self.test_name):
+            return
+
+        for item in fail_items:
+            if not self.d(text=item).exists(3):
+                print(f"  [Skip] 畫面上找不到測項 '{item}'，可能是 Android 版本不支援，跳過重試。")
+                continue
+
+            if item in self.test_mapping:
+                func_name = self.test_mapping[item]
+                print(f"  [Retry Action] 正在重跑函數: {func_name}")
+                # 利用 getattr 動態呼叫函數
+                getattr(self, func_name)()
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--retry", type=str, help="JSON list of failed subtests")
+    args = parser.parse_args()
+
     task = Features()
-    task.capture_content_for_notes_tests()
-    task.clipboard_preview_test()
+    try:
+        if args.retry:
+            fail_list = json.loads(args.retry)
+            task.run_specific_tests(fail_list)
+        else:
+            task.capture_content_for_notes_tests()
+            task.clipboard_preview_test()
+    finally:
+        try:
+            task.d.stop_uiautomator()
+        except:
+            pass
+
+
