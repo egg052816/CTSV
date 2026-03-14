@@ -1,4 +1,3 @@
-[Running] 1_Clock.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -16,17 +15,20 @@
   [Pass] Set Alarm Test 測試成功
 
 >>> Entering Test: Start Alarm Test
-...................
-  [Check] 測試正常，未顯示設定鬧鐘
-  [Nav] Back to CTS Verifier ...
-  [App] 已切回 CTS Verifier。
-  [Pass] Start Alarm Test 測試成功
+........................................
+  [Fail] 鬧鐘計時失敗
+  [Fail] Start Alarm Test 測試異常，判定失敗
+  [Crash] Start Alarm Test 發生意外錯誤: {'code': -32002, 'data': "Selector [text='Verify']", 'method': 'wait'}
+  [Recovery] 偵測到異常或結束，正在重啟 com.android.cts.verifier...
+  [Recovery] 正在重啟...
+  [Recovery] 重啟後未偵測到列表首頁，請檢查。
+  [Fail] 找不到子測項 Full Alarm Test
+  [Fail] 未能進入Full Alarm Test測項
+  [Recovery] 偵測到異常或結束，正在重啟 com.android.cts.verifier...
+  [Recovery] 正在重啟...
+  [Recovery] 重啟後未偵測到列表首頁，請檢查。
 
->>> Entering Test: Full Alarm Test
-  [Info] label:True, time_set:True, switch_on:True
-  [Nav] Back to CTS Verifier ...
-  [App] 已切回 CTS Verifier。
-  [Pass] Full Alarm Test 測試成功
+  [TestCase] Found : 'Alarms and Timers Tests'
 
 >>> Entering Test: Set Timer Test
   [Nav] Back to CTS Verifier ...
@@ -52,8 +54,7 @@
   [Pass] Start Timer With UI Test 測試成功
 Success
   [Clean] 已清除所有鬧鐘
-  [Pass] 該測項測試成功 
-[Running] 2_Device_Administration.py 
+  [Fail] 該測項測試出現異常 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -62,7 +63,7 @@ Success
   [Info] 偵測到遮罩文字，開始檢查鎖定狀態...
   [Pass] Device Admin Tapjacking Test 測試成功
 
-  [TestCase] Searching for:'Device Admin Uninstall Test'
+  [TestCase] Found : 'Device Admin Uninstall Test'
   [Install] 正在安裝: D:\Python\CTSV\Downloads\android-cts-verifier\CtsEmptyDeviceAdmin.apk
 Performing Streamed Install
 Success
@@ -82,7 +83,7 @@ _run_watchers exception: device 'A20252220011' not found
 _run_watchers exception: device 'A20252220011' not found
 _run_watchers exception: device 'A20252220011' not found
   [Wait] USB 已連線，正在等待 Android 系統啟動 (檢查 sys.boot_completed)...
-_run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator2Server] Starting Server\njava.lang.NullPointerException: Attempt to invoke interface method 'void android.view.accessibility.IAccessibilityManager.registerUiTestAutomationService(android.os.IBinder, android.accessibilityservice.IAccessibilityServiceClient, android.accessibilityservice.AccessibilityServiceInfo, int, int)' on a null object reference\n\tat android.app.UiAutomationConnection.registerUiTestAutomationServiceLocked(UiAutomationConnection.java:581)\n\tat android.app.UiAutomationConnection.connect(UiAutomationConnection.java:121)\n\tat android.app.UiAutomation.connectWithTimeout(UiAutomation.java:381)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat mirror.RefMethod.call(RefMethod.java:63)\n\tat uiautomator.InstrumentShellWrapper.getUiAutomation(InstrumentShellWrapper.java:101)\n\tat androidx.test.uiautomator.UiDevice$Api24Impl.getUiAutomationWithRetry(UiDevice.java:1545)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1468)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\njava.lang.IllegalStateException: UiAutomation not connected, UiAutomation@c014d89[id=-1, displayId=0, flags=0]\n\tat android.app.UiAutomation.throwIfNotConnectedLocked(UiAutomation.java:1640)\n\tat android.app.UiAutomation.getServiceInfo(UiAutomation.java:711)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1482)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\n")
+_run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator2Server] Starting Server\njava.lang.NullPointerException: Attempt to invoke interface method 'void android.view.accessibility.IAccessibilityManager.registerUiTestAutomationService(android.os.IBinder, android.accessibilityservice.IAccessibilityServiceClient, android.accessibilityservice.AccessibilityServiceInfo, int, int)' on a null object reference\n\tat android.app.UiAutomationConnection.registerUiTestAutomationServiceLocked(UiAutomationConnection.java:581)\n\tat android.app.UiAutomationConnection.connect(UiAutomationConnection.java:121)\n\tat android.app.UiAutomation.connectWithTimeout(UiAutomation.java:381)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat mirror.RefMethod.call(RefMethod.java:63)\n\tat uiautomator.InstrumentShellWrapper.getUiAutomation(InstrumentShellWrapper.java:101)\n\tat androidx.test.uiautomator.UiDevice$Api24Impl.getUiAutomationWithRetry(UiDevice.java:1545)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1468)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\njava.lang.IllegalStateException: UiAutomation not connected, UiAutomation@e0fb9f6[id=-1, displayId=0, flags=0]\n\tat android.app.UiAutomation.throwIfNotConnectedLocked(UiAutomation.java:1640)\n\tat android.app.UiAutomation.getServiceInfo(UiAutomation.java:711)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1482)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\n")
   [System] 系統啟動完成！(耗時: 12秒)
   [Reconnect] 重新建立 u2 連線...
 
@@ -113,7 +114,6 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Success] 螢幕鎖定已移除 (None)
   [Nav] Back to CTS Verifier ...
   [App] 已切回 CTS Verifier。
-[Running] 3_Device_Controls.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -193,22 +193,19 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Success] 螢幕鎖定已移除 (None)
   [Nav] Back to CTS Verifier ...
   [App] 已切回 CTS Verifier。
-[Running] 4_Display_Cutout.py 
+_run_watchers exception: Remote end closed connection without response
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
 
   [TestCase] Searching for:'DisplayCutout Test'
-  [Crash] DisplayCutout Test 發生意外錯誤: ('Unknown RPC error: -32001 androidx.test.uiautomator.StaleObjectException', ({'mask': 1, 'childOrSibling': [], 'childOrSiblingSelector': [], 'text': 'Got it'},), 'androidx.test.uiautomator.StaleObjectException\n\tat androidx.test.uiautomator.UiObject2.getAccessibilityNodeInfo(UiObject2.java:1022)\n\tat androidx.test.uiautomator.UiObject2.isChecked(UiObject2.java:436)\n\tat com.wetest.uia2.stub.ObjInfo.<init>(ObjInfo.java:69)\n\tat com.wetest.uia2.stub.ObjInfo.getObjInfo(ObjInfo.java:44)\n\tat com.wetest.uia2.stub.AutomatorServiceImpl.objInfo(AutomatorServiceImpl.java:840)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat com.googlecode.jsonrpc4j.JsonRpcBasicServer.invoke(JsonRpcBasicServer.java:467)\n\tat com.googlecode.jsonrpc4j.JsonRpcBasicServer.handleObject(JsonRpcBasicServer.java:352)\n\tat com.googlecode.jsonrpc4j.JsonRpcBasicServer.handleJsonNodeRequest(JsonRpcBasicServer.java:283)\n\tat com.googlecode.jsonrpc4j.JsonRpcBasicServer.handleRequest(JsonRpcBasicServer.java:251)\n\tat com.wetest.uia2.stub.AutomatorHttpServer.serve(AutomatorHttpServer.java:101)\n\tat fi.iki.elonen.NanoHTTPD.serve(NanoHTTPD.java:2244)\n\tat fi.iki.elonen.NanoHTTPD$HTTPSession.execute(NanoHTTPD.java:945)\n\tat fi.iki.elonen.NanoHTTPD$ClientHandler.run(NanoHTTPD.java:192)\n\tat java.lang.Thread.run(Thread.java:1012)\n')
-  [Recovery] 偵測到異常或結束，正在重啟 com.android.cts.verifier...
-  [Recovery] 正在重啟...
-  [Recovery] 重啟後未偵測到列表首頁，請檢查。
-[Running] 5_Features.py 
+  [Info] 邊框 0~15 已點選完成
+  [Pass] DisplayCutout Test 測試成功
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
 
-  [TestCase] Found : 'Capture Content For Notes Tests'
+  [TestCase] Searching for:'Capture Content For Notes Tests'
   [Pass] Capture Content For Notes Tests 測試成功
 
   [TestCase] Found : 'Clipboard Preview Test'
@@ -216,7 +213,6 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Check] 點擊Clipboard 
   [Pass] 提示詞正確
   [Pass] Clipboard Preview Test 測試成功
-[Running] 6_Input.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -226,7 +222,6 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
     -> [Result] 未發現 USI 支援特徵 (UsiVersion: <not set>)
   [Check] 硬體不支援 USI -> 點擊 No
   [Pass] USI Version Test 測試成功
-[Running] 7_Install_Apps.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -268,7 +263,6 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Nav] Back to CTS Verifier ...
   [App] 已切回 CTS Verifier。
   [Pass] View/Delete Instant Apps Test 測試成功
-[Running] 9_Notifications.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -291,7 +285,6 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Check] 確認畫面未出現 BubbleBot0
   [Nav] Back to CTS Verifier ...
   [App] 已切回 CTS Verifier。
-  [Action] Bubble 按鈕被隱藏，點擊向下箭頭展開...
   [Action] 成功找到 Bubble 按鈕，執行點擊。
   [Check] 確認畫面成功跳出 Bubble
   [Nav] Back to CTS Verifier ...
@@ -339,9 +332,10 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Check] 驗證螢幕轉向提示詞顯示正常
   [Pass] 驗證成功：IME 上方已正確顯示 'test pass'
   [Check] 驗證打字框 IME 功能正常
-  [Check] 驗證 SMALL HEIGHT BUBBLE 打字框顯示字樣功能正常
-  [Check] 驗證 MAX HEIGHT BUBBLE 打字框顯示字樣功能正常
-  [Pass] Bubble Notification Tests 測試成功
+  [Crash] Bubble Notification Tests 發生意外錯誤: (-32001, 'androidx.test.uiautomator.UiObjectNotFoundException', ({'mask': 2097152, 'childOrSibling': [], 'childOrSiblingSelector': [], 'resourceId': 'com.android.cts.verifier:id/test_message'},))
+  [Recovery] 偵測到異常或結束，正在重啟 com.android.cts.verifier...
+  [Recovery] 正在重啟...
+  [Recovery] 重啟後未偵測到列表首頁，請檢查。
 
   [TestCase] Found : 'CA Cert Notification Test'
   [Nav][L1] Looking for 'More security & privacy'
@@ -356,8 +350,10 @@ _run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator
   [Nav][L5] Click OK -> transitioned
   [Nav][OK] Navigation finished
   [Check] 系統會自動判定...
-  [Fail] trusted_credential 未能成功解除安裝, 測試失敗
-  [Fail] CA Cert Notification Test 測試異常，判定失敗
+  [Crash] CA Cert Notification Test 發生意外錯誤: {'code': -32002, 'data': "Selector [text='Uninstall']", 'method': 'wait'}
+  [Recovery] 偵測到異常或結束，正在重啟 com.android.cts.verifier...
+  [Recovery] 正在重啟...
+  [Recovery] 重啟後未偵測到列表首頁，請檢查。
 
   [TestCase] Found : 'CA Cert Notification on Boot test'
   [System] 正在啟動設定首頁...
@@ -388,13 +384,12 @@ _run_watchers exception: device 'A20252220011' not found
 _run_watchers exception: device 'A20252220011' not found
 _run_watchers exception: device 'A20252220011' not found
   [Wait] USB 已連線，正在等待 Android 系統啟動 (檢查 sys.boot_completed)...
-_run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator2Server] Starting Server\njava.lang.NullPointerException: Attempt to invoke interface method 'void android.view.accessibility.IAccessibilityManager.registerUiTestAutomationService(android.os.IBinder, android.accessibilityservice.IAccessibilityServiceClient, android.accessibilityservice.AccessibilityServiceInfo, int, int)' on a null object reference\n\tat android.app.UiAutomationConnection.registerUiTestAutomationServiceLocked(UiAutomationConnection.java:581)\n\tat android.app.UiAutomationConnection.connect(UiAutomationConnection.java:121)\n\tat android.app.UiAutomation.connectWithTimeout(UiAutomation.java:381)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat mirror.RefMethod.call(RefMethod.java:63)\n\tat uiautomator.InstrumentShellWrapper.getUiAutomation(InstrumentShellWrapper.java:101)\n\tat androidx.test.uiautomator.UiDevice$Api24Impl.getUiAutomationWithRetry(UiDevice.java:1545)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1468)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\njava.lang.IllegalStateException: UiAutomation not connected, UiAutomation@19161b1[id=-1, displayId=0, flags=0]\n\tat android.app.UiAutomation.throwIfNotConnectedLocked(UiAutomation.java:1640)\n\tat android.app.UiAutomation.getServiceInfo(UiAutomation.java:711)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1482)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\n[server] INFO: [UiAutomator2Server] Starting Server\njava.lang.NullPointerException: Attempt to invoke interface method 'void android.view.accessibility.IAccessibilityManager.registerUiTestAutomationService(android.os.IBinder, android.accessibilityservice.IAccessibilityServiceClient, android.accessibilityservice.AccessibilityServiceInfo, int, int)' on a null object reference\n\tat android.app.UiAutomationConnection.registerUiTestAutomationServiceLocked(UiAutomationConnection.java:581)\n\tat android.app.UiAutomationConnection.connect(UiAutomationConnection.java:121)\n\tat android.app.UiAutomation.connectWithTimeout(UiAutomation.java:381)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat mirror.RefMethod.call(RefMethod.java:63)\n\tat uiautomator.InstrumentShellWrapper.getUiAutomation(InstrumentShellWrapper.java:101)\n\tat androidx.test.uiautomator.UiDevice$Api24Impl.getUiAutomationWithRetry(UiDevice.java:1545)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1468)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\njava.lang.IllegalStateException: UiAutomation not connected, UiAutomation@19161b1[id=-1, displayId=0, flags=0]\n\tat android.app.UiAutomation.throwIfNotConnectedLocked(UiAutomation.java:1640)\n\tat android.app.UiAutomation.getServiceInfo(UiAutomation.java:711)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1482)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\n")
-  [System] 系統啟動完成！(耗時: 11秒)
+_run_watchers exception: ('server quit unexpectly', "[server] INFO: [UiAutomator2Server] Starting Server\njava.lang.NullPointerException: Attempt to invoke interface method 'void android.view.accessibility.IAccessibilityManager.registerUiTestAutomationService(android.os.IBinder, android.accessibilityservice.IAccessibilityServiceClient, android.accessibilityservice.AccessibilityServiceInfo, int, int)' on a null object reference\n\tat android.app.UiAutomationConnection.registerUiTestAutomationServiceLocked(UiAutomationConnection.java:581)\n\tat android.app.UiAutomationConnection.connect(UiAutomationConnection.java:121)\n\tat android.app.UiAutomation.connectWithTimeout(UiAutomation.java:381)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat mirror.RefMethod.call(RefMethod.java:63)\n\tat uiautomator.InstrumentShellWrapper.getUiAutomation(InstrumentShellWrapper.java:101)\n\tat androidx.test.uiautomator.UiDevice$Api24Impl.getUiAutomationWithRetry(UiDevice.java:1545)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1468)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\njava.lang.IllegalStateException: UiAutomation not connected, UiAutomation@132c207[id=-1, displayId=0, flags=0]\n\tat android.app.UiAutomation.throwIfNotConnectedLocked(UiAutomation.java:1640)\n\tat android.app.UiAutomation.getServiceInfo(UiAutomation.java:711)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1482)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\n")
+  [System] 系統啟動完成！(耗時: 12秒)
   [Reconnect] 重新建立 u2 連線...
 
   [TestCase] Found : 'CA Cert Notification on Boot test'
   [Pass] CA Cert Notification on Boot test 測試成功
-[Running] 11_Projection_Test.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -449,12 +444,11 @@ D:\Python\CTSV\python_311\Lib\site-packages\torch\utils\data\dataloader.py:775: 
   [Pass] Projection Widget Test 測試成功
   [Clean] 已釋放圖片物件資源
   [Clean] 已成功刪除暫存截圖: projection_widget_test_screen.png
-[Running] 12_Security.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
 
-  [TestCase] Searching for:'Android Protected Confirmation Test'
+  [TestCase] Found : 'Android Protected Confirmation Test'
   [Pass] Android Protected Confirmation Test 測試成功
 
   [TestCase] Found : 'CA Cert install via intent'
@@ -544,7 +538,8 @@ D:\Python\CTSV\python_311\Lib\site-packages\torch\utils\data\dataloader.py:775: 
   [App] 已切回 CTS Verifier。
 
   [TestCase] Searching for:'Lock Bound Keys Test'
-  [Pass] Lock Bound Keys Test 測試成功
+  [Fail] Lock Bound Keys Test 測試失敗
+  [Fail] 無法點擊 Fail 按鈕
   [Security] 正在移除螢幕鎖定 ...
   [Nav] 尚未發現 'Device unlock'...
   [Click] 已點擊 Device unlock 選項
@@ -557,7 +552,7 @@ D:\Python\CTSV\python_311\Lib\site-packages\torch\utils\data\dataloader.py:775: 
   [Nav] Back to CTS Verifier ...
   [App] 已切回 CTS Verifier。
 
-  [TestCase] Searching for:'Set New Password Complexity Test'
+  [TestCase] Found : 'Set New Password Complexity Test'
   [Step] : NONE
   [Check] 預期: [True, True, True, True, True] | 實際: [True, True, True, True, True]
   [Step] : LOW
@@ -593,17 +588,15 @@ D:\Python\CTSV\python_311\Lib\site-packages\torch\utils\data\dataloader.py:775: 
   [Success] 螢幕鎖定已移除 (None)
   [Nav] Back to CTS Verifier ...
   [App] 已切回 CTS Verifier。
-[Running] 13_Senors.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
 
-  [TestCase] Found : '6DoF Test'
+  [TestCase] Searching for:'6DoF Test'
   [Check] 點擊 6DoF Test，結果將自行判定
   [Init] 已關 閉Adaptive Brightness、Ambient Display、Auto-rotate screen、Stay awake、Location 設定
   [Fail] 頁面不可滾動且未發現目標。
   [Fail] 頁面不可滾動且未發現目標。
-[Running] 14_Streaming.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14
@@ -623,7 +616,6 @@ Traceback (most recent call last):
   File "D:\Python\CTSV\python_311\Lib\site-packages\uiautomator2\_selector.py", line 338, in must_wait
     raise UiObjectNotFoundError({'code': -32002, 'data': str(self.selector), 'method': 'wait'})
 uiautomator2.exceptions.UiObjectNotFoundError: {'code': -32002, 'data': "Selector [resourceId='com.android.cts.verifier:id/fail_button']", 'method': 'wait'}
-[Running] 15_Tiles.py 
 
   [Init] 正在連接裝置: A20252220011 ...
   [Info] 目前測試設備的版本為: Android 14

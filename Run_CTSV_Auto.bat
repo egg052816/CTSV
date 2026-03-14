@@ -15,6 +15,7 @@ set "ARROW= "
 set "BASE_DIR=%~dp0"
 set "PY=%BASE_DIR%python_311\python.exe"
 set "LOG_FILE=%BASE_DIR%execution_log.txt"
+set "TEMP_LOG=%BASE_DIR%temp_run.log"
 set "PYTHONPATH=%~dp0"
 
 echo [系統] 目前工作路徑: %BASE_DIR%
@@ -37,7 +38,7 @@ if not exist "%PY%" (
 )
 
 :: 安裝套件 (路徑已修正為 %BASE_DIR%)
-"%PY%" -c "import requests" >nul 2>&1
+"%PY%" -m pip install -r "%BASE_DIR%requirements.txt" -q --disable-pip-version-check
 if %errorlevel% neq 0 (
 	if exist "%BASE_DIR%requirements.txt" (
 		echo    %ARROW% 正在依照清單安裝必要套件...
@@ -71,15 +72,15 @@ echo [Step 2] 開始執行測試 ...
 
 cd /d "%BASE_DIR%"
 
-for %%i in (1_Clock 2_Device_Administration 3_Device_Controls 4_Display_Cutout 5_Features 6_Input 7_Install_Apps 8_Managed_Provisioning) do (
+for %%i in (1_Clock 2_Device_Administration 3_Device_Controls 4_Display_Cutout 5_Features 6_Input 7_Install_Apps 9_Notifications 11_Projection_Test 12_Security 13_Senors 14_Streaming 15_Tiles) do (
     echo.
-	echo 正在執行: %%i...
 	
-    "%PY%" -u "%%i.py" >> "%LOG_FILE%" 2>&1
-	
-	timeout /t 2 >nul
+	echo [Running] %%i.py | powershell -NoProfile -Command "$input | Tee-Object -FilePath '%TEMP_LOG%' -Append"
+    
+    "%PY%" -u "%%i.py" 2>&1 | powershell -NoProfile -Command "$input | Tee-Object -FilePath '%TEMP_LOG%' -Append"
+    
+    timeout /t 2 >nul
 )
-
 :: ========================================================
 :: [Step 3] 重跑 Fail 項目
 :: ========================================================
@@ -92,6 +93,18 @@ echo [Step 3] 分析 Log 並執行 Retry...
 :: [Step 4] 最終清理與報告
 :: ========================================================
 echo.
+
+echo [系統] 測試全數跑完，正在將 Log 轉存至 %LOG_FILE%...
+
+:: 將暫存檔內容寫入正式 Log 檔
+type "%TEMP_LOG%" > "%LOG_FILE%"
+
+:: 刪除暫存檔 (可選)
+del "%TEMP_LOG%"
+
+echo [系統] Log 轉存完成。
+
+
 echo [Step 4] 產生最終清理...
 REM if exist "%BASE_DIR%End_Clean_Env.py" (
     REM "%PY%" "%BASE_DIR%End_Clean_Env.py" >> "%LOG_FILE%" 2>&1

@@ -9,14 +9,14 @@ import zipfile
 import glob
 
 # 設定全域變數，確保清理和下載的路徑永遠一致
-DOWNLOAD_DIR = r"D:\Python\CTSV\Downloads"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 將 Downloads 資料夾建立在與腳本相同的目錄下
+DOWNLOAD_DIR = os.path.join(BASE_DIR, "Downloads")
 
 
 def clean_downloads_folder():
-    """
-    [清理階段]
-    清空下載目錄，確保沒有舊版本的 APK 干擾。
-    """
+    """清空下載目錄，確保沒有舊版本的 APK 干擾。"""
     print(f"\n=== [Cleanup] 正在清空目錄: {DOWNLOAD_DIR} ===")
 
     if not os.path.exists(DOWNLOAD_DIR):
@@ -37,7 +37,7 @@ def clean_downloads_folder():
         except Exception as e:
             print(f"  [Error] 刪除失敗 {item}: {e}")
 
-    print("=== 環境清理完畢 (All Clean) ===")
+    print("\n=== 環境清理完畢 (All Clean) ===")
 
 
 class EnvironmentSetup:
@@ -49,7 +49,7 @@ class EnvironmentSetup:
         self.save_dir = DOWNLOAD_DIR
 
         # 內網 CTS 下載點
-        self.base_url = "http://10.57.42.97/XTS/CTS/"
+        self.base_url = "http://10.57.42.97/RD/XTS/CTS/"
 
         # 目標檔案特徵
         self.target_keyword = "android-cts-verifier"
@@ -125,7 +125,7 @@ class EnvironmentSetup:
 
     def run_cmd(self, command):
         """ 執行系統 CMD 指令 """
-        print(f"    [CMD] 執行: {command}")
+        print(f"  [CMD] 執行: {command}")
         try:
             subprocess.run(command, shell=True, check=True)
         except subprocess.CalledProcessError as e:
@@ -153,11 +153,34 @@ class EnvironmentSetup:
             return found_files[0]
         return None
 
-    def download_and_setup(self):
-        print("=== CTSV 環境自動建置 (Zip Version) ===")
-        version_input = input("請輸入 Android 版本 (例如 14, 15): ").strip()
+    def _get_android_version(self):
+        """透過 ADB 自動抓取設備的 Android 版本號"""
+        print(f"  [Info] 正在透過 ADB 偵測 Android 版本...")
+        try:
+            # 加上 -s self.serial 確保對正確的設備下指令
+            cmd = ["adb", "-s", self.serial, "shell", "getprop", "ro.build.version.release"]
+            result = subprocess.check_output(cmd).decode("utf-8").strip()
 
-        target_url = urljoin(self.base_url, f"Android_{version_input}/")
+            if result:
+                print(f"  [Info] 成功偵測到 Android 版本: {result}")
+                return result
+            else:
+                print("  [Error] ADB 回傳的 Android 版本為空字串。")
+                return None
+        except Exception as e:
+            print(f"  [Error] 無法透過 ADB 獲取 Android 版本: {e}")
+            return None
+
+    def download_and_setup(self):
+        print("\n=== CTSV 環境自動建置 (Zip Version) ===")
+        # 1. 自動獲取 Android 版本
+        os_version = self._get_android_version()
+        if not os_version:
+            print("  [Error] 無法確認 Android 版本，建置中斷。")
+            return False
+
+        # 組合目標 URL (保留完整的 os_version)
+        target_url = urljoin(self.base_url, f"Android_{os_version}/")
         print(f"  [Connect] 正在連接內網: {target_url}")
 
         zip_save_path = None
@@ -172,24 +195,47 @@ class EnvironmentSetup:
             soup = BeautifulSoup(response.text, 'html.parser')
             links = soup.find_all('a')
 
+            available_zips = []
             for link in links:
                 filename = link.get('href')
-
+                # 檢查關鍵字與副檔名
                 if filename and self.target_keyword in filename and filename.endswith(self.target_ext):
-                    full_url = urljoin(target_url, filename)
-                    zip_save_path = os.path.join(self.save_dir, filename)
+                    available_zips.append(filename)
 
-                    print(f"  [Download] 發現壓縮包: {filename}")
-                    print("             (檔案較大，請耐心等待下載...)")
+            if not available_zips:
+                print(f"  [Error] 在該目錄下找不到符合 '{self.target_keyword}' 的 Zip 檔案")
+                return False
 
-                    with requests.get(full_url, stream=True) as r:
-                        r.raise_for_status()
-                        with open(zip_save_path, 'wb') as f:
-                            for chunk in r.iter_content(chunk_size=1024 * 1024):
-                                f.write(chunk)
+            # === 2. 選擇階段：多版本處理 ===
+            selected_file = None
+            if len(available_zips) > 1:
+                print(f"\n  [Notice] 偵測到多個版本，請選擇欲下載的檔案:")
+                for idx, name in enumerate(available_zips):
+                    print(f"    [{idx}] {name}")
 
-                    print(f"  [Download] 下載完成: {zip_save_path}")
-                    break
+                try:
+                    choice = int(input(f"  請輸入編號 (0-{len(available_zips) - 1}): ").strip())
+                    selected_file = available_zips[choice]
+                except (ValueError, IndexError):
+                    print("  [Error] 輸入無效，取消下載")
+                    return False
+            else:
+                selected_file = available_zips[0]
+
+            # === 3. 下載階段 ===
+            full_url = urljoin(target_url, selected_file)
+            zip_save_path = os.path.join(self.save_dir, selected_file)
+
+            print(f"\n  [Download] 準備下載: {selected_file}")
+            with requests.get(full_url, stream=True) as r:
+                r.raise_for_status()
+                with open(zip_save_path, 'wb') as f:
+                    # 使用 chunk 避免記憶體溢位
+                    for chunk in r.iter_content(chunk_size=1024 * 1024):
+                        f.write(chunk)
+
+            print(f"  [Download] 下載完成: {zip_save_path}")
+
 
             if not zip_save_path:
                 print(f"  [Error] 在該頁面找不到包含 '{self.target_keyword}' 的 zip 檔")

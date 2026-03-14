@@ -37,7 +37,7 @@ class DeviceControls(CtsVerifier):
             if not self.enter_subtest(self.test_name): return
 
             if os.path.exists(apk_path):
-                print(f"[Install] 正在安裝: {apk_path}")
+                print(f"  [Install] 正在安裝: {apk_path}")
                 cmd = f'adb -s {self.d.serial} install "{apk_path}"'
                 result = subprocess.run(cmd, shell=True, check=True, capture_output=True, text=True, encoding='utf-8')
                 output_log = result.stdout.strip()
@@ -56,7 +56,7 @@ class DeviceControls(CtsVerifier):
                     self.click_fail()  # 呼叫您現有的 Fail 點擊函式
 
             else:
-                print(f"[Error] 找不到 {apk_path}")
+                print(f"  [Error] 找不到 {apk_path}")
                 self.click_fail()
 
             self.d.sleep(1)
@@ -78,7 +78,7 @@ class DeviceControls(CtsVerifier):
         try:
             if not self.enter_subtest(self.test_name): return
 
-            self.add_device_controls_tile()
+            self.add_app_tile("Device controls")
             self.d.sleep(2)
 
             self.d(text="Device controls").click()

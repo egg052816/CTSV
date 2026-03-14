@@ -3,3 +3,4 @@ python_env/
 *.zip 
 execution_log.txt 
 current_serial.txt
+python_311/ 

@@ -8,7 +8,7 @@ class InstallApps(CtsVerifier):
     test_mapping ={
         "Instant Apps Notification Test": "install_apps_notification_test",
         "Instant Apps Recents Test": "install_apps_recents_test",
-        #"View/Delete Instant Apps Test": "view_delete_instant_apps_test"
+        "View/Delete Instant Apps Test": "view_delete_instant_apps_test"
     }
 
 
@@ -319,16 +319,16 @@ class InstallApps(CtsVerifier):
             self.settings_nav("Apps")
             self.d(textContains="See all ").click()
             self.d.sleep(2)
-            if self.d(className="android.widget.Button").wait(2):
-                self.d(className="android.widget.Button").click()
+            if self.d(className="android.widget.TextView", text="All apps").wait(2):
+                self.d(className="android.widget.TextView", text="All apps").click()
             else:
                 print("  [Fail] 找不到All apps 選單")
                 self.open_ctsv_from_recents()
                 self.click_fail()
                 return False
 
-            self.d.sleep(1)
-            self.d(textContains = "Instant apps").click()
+            self.d.sleep(2)
+            self.d(className="android.widget.TextView", text="Instant apps").click()
 
             if self.d(text="Sample Instant App for Testing").exists(3):
                 self.d(text="Sample Instant App for Testing").click()

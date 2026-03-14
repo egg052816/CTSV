@@ -61,7 +61,7 @@ class Input(CtsVerifier):
 
                 self.d.sleep(2)
 
-            if self.d(resourceId=self.btn_pass).exists(timeout=3):
+            if self.d(resourceId=self.btn_pass).exists(3):
                 self.click_pass()
             else:
                 self.click_fail()

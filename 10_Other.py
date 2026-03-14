@@ -83,3 +83,92 @@ if "__main__" == __name__:
 
 
 
+
+
+
+
+
+
+
+        self.d.sleep(1)
+        i_m_done = self.d(text="I'm done", enabled=True)
+        if not i_m_done.wait(1):
+            self.d(scrollable=True).scroll.to(text="I'm done", enabled=True)
+
+        if i_m_done.exists():
+            i_m_done.click()
+            self.d.sleep(0.5)
+            self.d.press("power")
+
+            intent_text = self.d(textContains="This page is a full screen intent")
+            if intent_text.exists(10) and intent_text.info.get('visible-to-user'):
+                self.d.press("home")
+                self.d.sleep(2)
+                if self.d(resourceId="com.android.systemui:id/lock_icon_view").exists(2) and self.d(
+                        resourceId="com.android.systemui:id/lock_icon_view").info.get('visible-to-user'):
+                    self.unlock_device()
+                self.d.sleep(1)
+                self.open_ctsv_from_recents()
+                pass_btn = self.d(resourceId="com.android.cts.verifier:id/iva_action_button_pass", enabled=True)
+                if pass_btn.exists:
+                    print("  [Check] full screen intent 驗證正常")
+                    self.d.sleep(1)
+                    pass_btn.click()
+                else:
+                    print("  [Fail] full screen intent 驗證失敗")
+                    self.click_fail()
+                    return False
+        else:
+            print("  [Fail] 畫面上未顯示I'm done 按鈕可點擊，測試失敗")
+            self.d.press("back")
+            self.d.sleep(1)
+            self.unlock_device()
+            self.d.sleep(1)
+            self.click_fail()
+            return False
+
+        retry_back = 0
+        while not self.d(resourceId=self.btn_pass).exists() and retry_back < 2:
+            self.d.press("back")
+            self.d.sleep(1)
+            retry_back += 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

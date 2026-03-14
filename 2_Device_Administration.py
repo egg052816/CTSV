@@ -80,12 +80,12 @@ class DeviceAdministration(CtsVerifier):
             apk_path = os.path.join(base_dir, apk_name)
 
             if  os.path.exists(apk_path):
-                print(f"[Install] 正在安裝: {apk_path}")
+                print(f"  [Install] 正在安裝: {apk_path}")
                 cmd = f'adb -s {self.d.serial} install -r -g "{apk_path}"'
                 subprocess.run(cmd, shell=True, check=True)
                 self.d.sleep(1)
             else:
-                print(f"[Error] 找不到 {apk_path}")
+                print(f"  [Error] 找不到 {apk_path}")
                 return
 
             self.d(resourceId="com.android.cts.verifier:id/enable_device_admin_button").click()
@@ -109,6 +109,7 @@ class DeviceAdministration(CtsVerifier):
             if self.d(scrollable=True).scroll.to(resourceId="com.android.settings:id/restricted_action"):
                 self.d.sleep(1)
                 self.d(resourceId="com.android.settings:id/restricted_action").click()
+                print("  [Check] 確認並點擊 Deactivate & uninstall 按鈕")
             else:
                 self.d.press("back")
                 self.d.sleep(0.5)
@@ -117,8 +118,8 @@ class DeviceAdministration(CtsVerifier):
                 print("  [Fail] 找不到 Deactivate & uninstall 按鈕")
                 self.click_fail()
 
-            self.d.sleep(3)
-            if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(timeout=3):
+            self.d.sleep(8)
+            if self.d(resourceId="com.android.cts.verifier:id/pass_button", enabled=True).wait(5):
                 self.click_pass()
             else:
                 print(f"  [Fail] {self.test_name} 測試失敗")

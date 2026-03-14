@@ -2,3 +2,5 @@ requests
 beautifulsoup4
 uiautomator2
 adbutils[apk]
+easyocr
+Pillow

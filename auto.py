@@ -13,9 +13,10 @@ class CtsVerifier:
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.serial_file = os.path.join(self.base_dir, "current_serial.txt")
         self.serial = self._get_serial_from_file()
-        print(f"  [Init] 正在連接裝置: {self.serial} ...")
+        print(f"\n  [Init] 正在連接裝置: {self.serial} ...")
 
         # 2. 使用重試機制連線，取代原本的 u2.connect(self.serial)
+
         self.d = self._connect_device_with_retry()
 
         self.os_version = self.d.device_info['version']
@@ -37,10 +38,12 @@ class CtsVerifier:
         # self.d.watcher("AutoClicker").when('//*[@text="Confirm"]').click() # 設定密碼會有問題
         self.d.watcher("AutoClicker").when('//*[@text="ALWAYS"]').click()
         # self.d.watcher("AutoClicker").when('//*[@text="Turn on location"]').click()
+        self.d.watcher("AutoClicker").when('//*[@text="Dismiss"]').click()
         self.d.watcher.start()
 
     def scroll_and_click(self, target_text):
 
+        self.test_name = target_text
         # 設定最大重試次數 (防止無限迴圈)
         max_retries = 3
 
@@ -64,7 +67,7 @@ class CtsVerifier:
                 # scroll.to 會自動邊滑邊找，直到找到 or 到底為止
                 if scroller.scroll.to(text=target_text):
                     self.d(text=target_text).click()
-                    print(f"  [Nav] Found (Scrolled Down): '{target_text}'")
+                    print(f"\n  [TestCase] Found : '{target_text}'")
                     return True
 
                 # === 3. 如果到底還沒找到，直接回到頂部 ===
@@ -203,8 +206,10 @@ class CtsVerifier:
         """ 設定螢幕鎖定 """
         print(f"  [Security] 正在設定螢幕鎖定為: {mode}...")
 
-        self.d.shell("sh -c 'am force-stop com.android.settings; am start -W -a android.settings.SECURITY_SETTINGS -f 0x10008000'")
+        self.d.shell("am force-stop com.android.settings")
         self.d.sleep(1)
+        self.d.shell("am start -W -a android.settings.SECURITY_SETTINGS -f 0x10008000")
+        self.d.sleep(3)
 
         target_layout = self.d(className="android.widget.LinearLayout", clickable=True).child(text="Device unlock")
 
@@ -371,8 +376,10 @@ class CtsVerifier:
     def remove_screen_lock(self):
         """ 解除螢幕鎖定 (回到 None) """
         print("  [Security] 正在移除螢幕鎖定 ...")
-        self.d.shell("sh -c 'am force-stop com.android.settings; am start -W -a android.settings.SECURITY_SETTINGS -f 0x10008000'")
+        self.d.shell("am force-stop com.android.settings")
         self.d.sleep(1)
+        self.d.shell("am start -W -a android.settings.SECURITY_SETTINGS -f 0x10008000")
+        self.d.sleep(3)
 
         target_layout = self.d(className="android.widget.LinearLayout", clickable=True).child(text="Device unlock")
 
@@ -563,12 +570,11 @@ class CtsVerifier:
             self.d.swipe_points([p1, p4, p7, p8, p9], duration=0.2)
 
 
-
-    def add_device_controls_tile(self):
+    def add_app_tile(self, app:str):
         """
-        自動化 Step 2: 下拉狀態列 -> 編輯 -> 拖曳新增 'Device controls'
+        自動化 Step 2: 下拉狀態列 -> 編輯 -> 拖曳新增 'app'
         """
-        print("  [QS] 正在嘗試將 'Device controls' 加入快速設定面板...")
+        print(f"  [QS] 正在嘗試將 '{app}' 加入快速設定面板...")
 
         # 1. 下拉狀態列 (兩次以展開完整 Quick Settings)
         self.d.open_quick_settings()
@@ -587,30 +593,30 @@ class CtsVerifier:
         edit_btn.click()
         self.d.sleep(1.5)  # 等待編輯介面動畫
 
-        # 3. 檢查 'Device controls' 是否已經在「上方 (已啟用)」區域？
+        # 3. 檢查 'app' 是否已經在「上方 (已啟用)」區域？
         # 如果已經在上面，就不需要再拖了
         # 我們用一個簡單的高度判斷：如果它在螢幕上半部，通常就是已啟用
-        device_control_tile = self.d(text="Device controls")
+        app_tile = self.d(text=app)
 
-        if device_control_tile.exists:
+        if app_tile.exists:
             # 取得座標
-            info = device_control_tile.info['bounds']
+            info = app_tile.info['bounds']
             cy = (info['top'] + info['bottom']) / 2
             h = self.d.window_size()[1]
 
             if cy < h * 0.5:
-                print("  [Info] 'Device controls' 已經在啟用列表中，無需新增。")
+                print(f"  [Info] '{app}' 已經在啟用列表中，無需新增。")
                 self.d.press("back")
                 return True
 
-        # 4. 在下方「可用列表」尋找 'Device controls'
+        # 4. 在下方「可用列表」尋找 'app'
         # 如果第一頁沒看到，可能要往下滑
-        if not device_control_tile.exists:
-            print("  [Nav] 搜尋 'Device controls' 圖示中...")
-            self.d(scrollable=True).scroll.to(text="Device controls")
+        if not app_tile.exists:
+            print(f"  [Nav] 搜尋 '{app}' 圖示中...")
+            self.d(scrollable=True).scroll.to(text=app)
 
-        if not device_control_tile.exists:
-            print("  [Fail] 找不到 'Device controls' 圖示！請確認 CtsDeviceControlsApp.apk 是否安裝成功？")
+        if not app_tile.exists:
+            print(f"  [Fail] 找不到 '{app}' 圖示！請確認 apk 是否安裝成功？")
             self.d.press("back")
             return False
 
@@ -619,7 +625,7 @@ class CtsVerifier:
 
         # 目標位置：螢幕上方 1/3 處 (隨便找個已經存在的 Tile 位置丟過去)
         # 這裡我們直接設定一個絕對座標，通常是螢幕寬度的一半, 高度的 20%
-        src_bounds = device_control_tile.info['bounds']
+        src_bounds = app_tile.info['bounds']
         sx = (src_bounds['left'] + src_bounds['right']) / 2
         sy = (src_bounds['top'] + src_bounds['bottom']) / 2
 
@@ -637,19 +643,16 @@ class CtsVerifier:
             # 就算機器很快，多按這 2 秒也不會導致失敗，但少按 0.1 秒就會失敗
             self.d.sleep(2.5)
 
-            # (C) 慢速移動 (模擬手指慢慢拖過去)
-            # 我們分 10 步慢慢移過去，避免移動太快系統跟不上
-            steps = 60
+            # (C) 移動 (模擬手指慢慢拖過去(dx, dy)
+            # 透過迴圈手動發送 move 指令，取代會自動放開的 drag
+            steps = 50
             for i in range(1, steps + 1):
-                # 線性插值計算中間點
                 move_x = sx + (dx - sx) * (i / steps)
                 move_y = sy + (dy - sy) * (i / steps)
                 self.d.touch.move(move_x, move_y)
-                # 每一步之間極短暫停頓，增加穩定度
-                self.d.sleep(0.02)
+                self.d.sleep(0.04)
 
-                # (D) 到達終點，再稍微停一下確認系統鎖定位置
-            self.d.sleep(1)
+            self.d.sleep(3)
 
             # (E) 放開手指 帶入座標
             self.d.touch.up(dx, dy)
@@ -668,8 +671,8 @@ class CtsVerifier:
         self.d.press("back")
         self.d.sleep(1)
 
-        if self.d(text="Device controls").exists:
-            print("  [Success] 成功加入 Device controls！")
+        if self.d(text=app).exists:
+            print(f"  [Success] 成功加入 {app}！")
             return True
         else:
             print("  [Fail] 加入失敗，請檢查 UI 動作。")
@@ -1026,6 +1029,86 @@ class CtsVerifier:
             subprocess.run(f"adb -s {self.serial} forward --remove-all", shell=True)
         except Exception as repair_error:
             print(f"    -> [Repair] 修復指令執行失敗: {repair_error}")
+
+    def connect_fih_wifi(self):
+        """
+        自動連接公司網路 FIH-Free
+        """
+        wifi_ssid = "FIH-Free"
+        print(f"  [Action] 準備連接 Wi-Fi: {wifi_ssid}")
+
+        try:
+            # 1. 確保 Wi-Fi 開關已開啟
+            self.d.shell("svc wifi enable")
+            self.d.sleep(1)
+
+            # 2. 透過 ADB 強制連接指定 SSID (適用於無密碼或已儲存的網路)
+            # cmd -w 代表等待執行完成
+            connect_cmd = f"cmd wifi connect-network {wifi_ssid} open"
+            self.d.shell(connect_cmd)
+
+            # 3. 驗證連線狀態 (最多等待 10 秒)
+            for i in range(20):
+                # 透過 .output 取得指令的純文字結果
+                wifi_info = self.d.shell("cmd wifi status").output
+
+                # 判斷 SSID 是否存在於連線資訊中
+                if wifi_ssid in wifi_info:
+                    print(f"  [Pass] 已成功連接至 {wifi_ssid}")
+                    return True
+
+                self.d.sleep(1)
+
+            print(f"  [Fail] 連接 {wifi_ssid} 超時")
+            return False
+
+        except Exception as e:
+            print(f"  [Error] 連接 Wi-Fi 發生異常: {e}")
+            return False
+
+    def clear_all_notifications(self):
+        """
+        展開通知欄並清空所有通知。
+        若通知過多，會自動往下滑動直到看見 'Clear all' 按鈕。
+        """
+        print("  [Action] 準備清空通知欄...")
+        try:
+            # 1. 透過 u2 指令展開系統通知欄
+            self.d.open_notification()
+            self.d.sleep(1.5)
+
+            # 2. 如果畫面上還沒看到 "Clear all"，就驅動畫面往下滑找尋
+            if not self.d(text="Clear all").exists:
+                try:
+                    # scrollable=True 代表尋找可滑動的區域，scroll.to 會一直滑動直到目標文字出現
+                    for _ in range(5):
+                        # 1. 先檢查畫面上是不是已經有 Clear all 了
+                        if self.d(text="Clear all").exists:
+                            break  # 如果有，就立刻跳出迴圈，停止滑動
+
+                        # 2. 如果沒有，就強制畫面往下捲動一頁 (等同手指往上滑)
+                        self.d(scrollable=True).scroll.forward()
+
+                        # 3. 稍微等待畫面渲染，再進行下一次迴圈檢查
+                        self.d.sleep(0.5)
+                except Exception:
+                    # 如果滑到底都沒有出現，代表可能被系統隱藏或真的沒有通知，略過報錯
+                    pass
+
+            # 3. 進行點擊判定
+            if self.d(text="Clear all").exists:
+                self.d(text="Clear all").click()
+                print("  [Success] 已成功點擊 Clear all 按鈕，通知已清空")
+                self.d.sleep(1)
+            else:
+                print("  [Skip] 找不到 Clear all 按鈕 (目前可能沒有可清除的通知)")
+                # 按下返回鍵，把通知欄收起來，避免擋住後續測試
+                self.d.press("back")
+
+        except Exception as e:
+            print(f"  [Error] 嘗試清空通知欄時發生異常: {e}")
+            # 確保發生預期外錯誤時，也能盡量退出通知欄，不干擾主線程
+            self.d.press("back")
 
 
     def click_final_pass(self):

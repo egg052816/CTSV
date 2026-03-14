@@ -22,6 +22,7 @@ class Clock(CtsVerifier):
         if not self.scroll_and_click(self.class_name):
             print("[Fail] 無法進入 Alarms and Timers Tests，停止測試。")
             self.go_back_to_list()
+            return False
 
         # 依序執行測項
         time.sleep(3)
@@ -212,12 +213,15 @@ class Clock(CtsVerifier):
                 self.open_ctsv_from_recents()
                 self.click_fail()
 
-            self.d(scrollable=True).scroll.to(text="Create Alarm Test")
-            time.sleep(1)
-
             target_label = "Create Alarm Test"
             target_time_part = "1:23"
             is_passed = False
+
+            if not self.d(scrollable=True).scroll.to(text="Create Alarm Test"):
+                self.d(scrollable=True).scroll.vert.backward.to(text="Create Alarm Test")
+
+            self.d.sleep(1)
+
             label = self.d(text=target_label).exists()
             time_set = self.d(textContains=target_time_part).exists()
             switch_on = self.d(resourceId="com.google.android.deskclock:id/onoff", checked=True).wait(5)
